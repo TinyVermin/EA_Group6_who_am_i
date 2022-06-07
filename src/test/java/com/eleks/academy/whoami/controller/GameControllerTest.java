@@ -1,6 +1,7 @@
 package com.eleks.academy.whoami.controller;
 
 import com.eleks.academy.whoami.core.Game;
+import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
@@ -43,7 +44,7 @@ class GameControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
-                .andExpect(jsonPath("$.status").value("WAITING_FOR_PLAYER"))
+                .andExpect(jsonPath("$.status").value(GameState.WAITING_FOR_PLAYER.toString()))
                 .andExpect(jsonPath("$.playersInGame").value(1));
     }
 
@@ -72,7 +73,7 @@ class GameControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
-                .andExpect(jsonPath("$.status").value("SUGGESTING_CHARACTER"))
+                .andExpect(jsonPath("$.status").value(GameState.SUGGESTING_CHARACTER.toString()))
                 .andExpect(jsonPath("$.playersInGame").value(4));
     }
 }
