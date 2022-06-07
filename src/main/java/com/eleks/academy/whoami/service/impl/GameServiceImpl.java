@@ -4,7 +4,7 @@ import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
-import com.eleks.academy.whoami.model.response.AllGames;
+import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.repository.GameRepository;
 import com.eleks.academy.whoami.service.GameService;
@@ -47,9 +47,9 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public List<AllGames> findAvailableGames(String player) {
+    public List<GameLight> findAvailableGames(String player) {
         return this.gameRepository.findAllAvailable(player)
-                .map(AllGames::of)
+                .map(GameLight::of)
                 .toList();
     }
 }

@@ -1,7 +1,7 @@
 package com.eleks.academy.whoami.service;
 
 import com.eleks.academy.whoami.core.SynchronousPlayer;
-import com.eleks.academy.whoami.model.response.AllGames;
+import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.model.response.GameDetails;
 
 import java.util.List;
@@ -13,5 +13,5 @@ public interface GameService {
 
     Optional<GameDetails> quickGame(String player);
 
-    List<AllGames> findAvailableGames(String player);
+    List<GameLight> findAvailableGames(String player);
 }

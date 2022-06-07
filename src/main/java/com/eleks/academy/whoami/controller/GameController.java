@@ -1,6 +1,6 @@
 package com.eleks.academy.whoami.controller;
 
-import com.eleks.academy.whoami.model.response.AllGames;
+import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.service.GameService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class GameController {
     }
 
     @GetMapping
-    public List<AllGames> findAvailableGames(@RequestHeader(PLAYER) String player) {
+    public List<GameLight> findAvailableGames(@RequestHeader(PLAYER) String player) {
         return this.gameService.findAvailableGames(player);
     }
 

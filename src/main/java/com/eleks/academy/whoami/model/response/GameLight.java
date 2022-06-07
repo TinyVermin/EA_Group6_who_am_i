@@ -11,20 +11,16 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GameDetails {
-
+public class GameLight {
     private String id;
-
     private GameState status;
-
     private String playersInGame;
 
-    public static GameDetails of(SynchronousGame game) {
-        return GameDetails.builder()
+    public static GameLight of(SynchronousGame game) {
+        return GameLight.builder()
                 .id(game.getId())
                 .status(game.getStatus())
                 .playersInGame(game.getCountPlayersInGame().toString())
                 .build();
     }
-
 }
