@@ -23,7 +23,7 @@ public class GameDetails {
         return GameDetails.builder()
                 .gameId(game.getId())
                 .status(game.getStatus())
-                .playersInGame(game.getPlayersInGame())
+                .playersInGame(game.getCountPlayersInGame())
                 .build();
     }
 
