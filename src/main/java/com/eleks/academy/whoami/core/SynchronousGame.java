@@ -1,8 +1,9 @@
 package com.eleks.academy.whoami.core;
 
+import java.util.List;
 import java.util.Optional;
 
-public interface SynchronousGame extends Game{
+public interface SynchronousGame extends Game {
 
     Optional<SynchronousPlayer> findPlayer(String player);
 
@@ -10,7 +11,9 @@ public interface SynchronousGame extends Game{
 
     SynchronousGame enrollToGame(SynchronousPlayer player);
 
-    Integer getPlayersInGame();
+    Integer getCountPlayersInGame();
+
+    List<SynchronousPlayer> getPlayersInGame();
 
     GameState getStatus();
 
