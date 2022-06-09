@@ -7,7 +7,9 @@ import java.util.Optional;
 
 public interface GameService {
 
-    SynchronousPlayer enrollToGame(String id, String player);
+    Optional<SynchronousPlayer> enrollToGame(String id, String player);
 
     Optional<GameDetails> quickGame(String player);
+
+    GameDetails createGame(String player);
 }

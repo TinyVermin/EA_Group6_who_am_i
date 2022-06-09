@@ -76,4 +76,29 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.status").value(GameState.SUGGESTING_CHARACTER.toString()))
                 .andExpect(jsonPath("$.playersInGame").value(4));
     }
+    @Test
+    void crateGame() throws Exception {
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games")
+                                .header("X-Player", "player")
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
+                .andExpect(jsonPath("$.status").value(GameState.WAITING_FOR_PLAYER.toString()))
+                .andExpect(jsonPath("$.playersInGame").value(1));
+    }
+    @Test
+
+    void enrolToGame() throws Exception {
+        var game = new PersistentGame("player",4,uuidGenerator);
+        gameRepository.save(game);
+
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games/" + game.getId() + "/players")
+                                .header("X-Player", "player2")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("player2"));
+
+    }
 }

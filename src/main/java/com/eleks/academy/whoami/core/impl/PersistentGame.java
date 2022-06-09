@@ -14,7 +14,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class PersistentGame implements  SynchronousGame {
+public class PersistentGame implements SynchronousGame {
 
     private final Lock turnLock = new ReentrantLock();
     private final String id;
@@ -34,7 +34,9 @@ public class PersistentGame implements  SynchronousGame {
 
     @Override
     public Optional<SynchronousPlayer> findPlayer(String player) {
-        return Optional.empty();
+        return players.stream()
+                .filter(pl -> pl.getName().equals(player))
+                .findFirst();
     }
 
     @Override
@@ -47,20 +49,22 @@ public class PersistentGame implements  SynchronousGame {
         turnLock.lock();
         try {
             players.stream()
-                    .filter(f->f.getName().equals(player.getName()))
+                    .filter(f -> f.getName().equals(player.getName()))
                     .findFirst()
-                    .ifPresent(m-> {throw new GameException("Player already exist");});
-            if(players.size() < this.maxPlayers ) {
+                    .ifPresent(m -> {
+                        throw new GameException("Player already exist");
+                    });
+            if (players.size() < this.maxPlayers) {
                 players.add(player);
                 if (players.size() == maxPlayers) {
                     state = GameState.SUGGESTING_CHARACTER;
                 }
                 return this;
             }
-        }finally {
+        } finally {
             turnLock.unlock();
         }
-        throw  new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot enroll to a game");
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot enroll to a game");
     }
 
     @Override
