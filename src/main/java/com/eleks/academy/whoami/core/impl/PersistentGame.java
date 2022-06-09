@@ -78,8 +78,12 @@ public class PersistentGame implements SynchronousGame {
     }
 
     @Override
-    public Integer getPlayersInGame() {
+    public Integer getCountPlayersInGame() {
         return players.size();
     }
 
+    @Override
+    public List<SynchronousPlayer> getPlayersInGame() {
+        return players;
+    }
 }

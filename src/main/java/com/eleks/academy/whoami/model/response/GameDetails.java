@@ -13,17 +13,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GameDetails {
 
-    private String gameId;
+    private String id;
 
     private GameState status;
 
-    private Integer playersInGame;
+    private String playersInGame;
 
     public static GameDetails of(SynchronousGame game) {
         return GameDetails.builder()
-                .gameId(game.getId())
+                .id(game.getId())
                 .status(game.getStatus())
-                .playersInGame(game.getPlayersInGame())
+                .playersInGame(game.getCountPlayersInGame().toString())
                 .build();
     }
 

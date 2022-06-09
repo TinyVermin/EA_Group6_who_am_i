@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.util.IdGenerator;
 import org.springframework.util.SimpleIdGenerator;
 
@@ -77,6 +78,7 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.playersInGame").value(4));
     }
     @Test
+
     void crateGame() throws Exception {
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games")
@@ -99,6 +101,13 @@ class GameControllerTest {
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("player2"));
+    }
 
+    void findAvailableGames() throws Exception {
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.get("/games")
+                                .header("X-Player", "player"))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$[0]").doesNotHaveJsonPath());
     }
 }

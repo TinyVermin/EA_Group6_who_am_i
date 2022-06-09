@@ -1,5 +1,6 @@
 package com.eleks.academy.whoami.controller;
 
+
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.model.response.GameDetails;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 import java.util.List;
 
@@ -27,10 +30,16 @@ public class GameController {
                 .orElseGet(() -> ResponseEntity.badRequest().build());
     }
 
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public GameDetails createGame(@RequestHeader(PLAYER) String player) {
         return this.gameService.createGame(player);
+    }
+
+    @GetMapping
+    public List<GameLight> findAvailableGames(@RequestHeader(PLAYER) String player) {
+        return this.gameService.findAvailableGames(player);
     }
 
     @PostMapping("/{id}/players")
