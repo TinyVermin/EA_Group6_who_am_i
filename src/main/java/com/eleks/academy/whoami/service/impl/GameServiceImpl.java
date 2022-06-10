@@ -25,14 +25,15 @@ public class GameServiceImpl implements GameService {
     private final IdGenerator uuidGenerator;
 
     @Override
-    public SynchronousPlayer enrollToGame(String id, String player) {
-        return this.gameRepository.findById(id)
+    public Optional<SynchronousPlayer> enrollToGame(String id, String player) {
+        SynchronousPlayer synchronousPlayer = this.gameRepository.findById(id)
                 .filter(SynchronousGame::isAvailable)
                 .map(game -> game.enrollToGame(new PersistentPlayer(player)))
                 .flatMap(m -> m.findPlayer(player))
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot enroll to a game")
                 );
+        return Optional.of(synchronousPlayer);
     }
 
     @Override
@@ -47,6 +48,12 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    public GameDetails createGame(String player) {
+        var game = this.gameRepository.save(new PersistentGame(player, 4, uuidGenerator));
+        return GameDetails.of(game);
+    }
+  
+   @Override
     public List<GameLight> findAvailableGames(String player) {
         return this.gameRepository.findAllAvailable(player)
                 .map(GameLight::of)

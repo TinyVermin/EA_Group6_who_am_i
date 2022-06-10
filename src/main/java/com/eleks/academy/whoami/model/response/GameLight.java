@@ -1,5 +1,6 @@
 package com.eleks.academy.whoami.model.response;
 
+
 import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GameLight {
+
     private String id;
     private GameState status;
     private String playersInGame;
