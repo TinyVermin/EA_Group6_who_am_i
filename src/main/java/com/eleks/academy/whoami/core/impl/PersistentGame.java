@@ -4,6 +4,8 @@ import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.exception.GameException;
+import com.eleks.academy.whoami.model.response.GameDetails;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.util.IdGenerator;
 import org.springframework.web.server.ResponseStatusException;
@@ -13,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 public class PersistentGame implements  SynchronousGame {
 
@@ -77,5 +80,19 @@ public class PersistentGame implements  SynchronousGame {
     public Integer getPlayersInGame() {
         return players.size();
     }
+
+    @Override
+    public SynchronousGame leaveGame(SynchronousPlayer player) {
+        if(isAvailable()|| state == GameState.SUGGESTING_CHARACTER) {
+            players.removeIf(p -> p.getName().equals(player.toString()));
+        }   
+           return this;
+    }
+
+    @Override
+    public boolean isFinished() {
+        return state == GameState.GAME_FINISHED;
+    }
+
 
 }
