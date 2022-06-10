@@ -1,6 +1,9 @@
 package com.eleks.academy.whoami.core;
 
+import java.util.List;
 import java.util.Optional;
+
+import com.eleks.academy.whoami.model.response.GameDetails;
 
 public interface SynchronousGame extends Game{
 
@@ -15,5 +18,13 @@ public interface SynchronousGame extends Game{
     GameState getStatus();
 
     boolean isAvailable();
+
+    void leaveGame(SynchronousPlayer player);
+
+    boolean isFinished();
+
+
+
+    
 
 }
