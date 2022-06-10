@@ -19,7 +19,7 @@ public interface SynchronousGame extends Game{
 
     boolean isAvailable();
 
-    void leaveGame(SynchronousPlayer player);
+    SynchronousGame leaveGame(SynchronousPlayer player);
 
     boolean isFinished();
 
