@@ -1,5 +1,7 @@
 package com.eleks.academy.whoami.service.impl;
 
+import com.eleks.academy.whoami.core.GameState;
+import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
@@ -48,15 +50,43 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public GameDetails createGame(String player) {
+    public Optional<GameDetails> createGame(String player) {
         var game = this.gameRepository.save(new PersistentGame(player, 4, uuidGenerator));
-        return GameDetails.of(game);
+        return Optional.of(GameDetails.of(game));
     }
-  
-   @Override
+
+    @Override
     public List<GameLight> findAvailableGames(String player) {
         return this.gameRepository.findAllAvailable(player)
                 .map(GameLight::of)
                 .toList();
+    }
+
+    @Override
+    public void suggestCharacter(String id, String player, String character) {
+        this.gameRepository.findById(id)
+                .filter(state -> state.getStatus() == GameState.SUGGESTING_CHARACTER)
+                .or(() -> {
+                    throw new GameException("Not available");
+                })
+                .ifPresentOrElse(p -> p.setCharacter(player, character),
+                        () -> {
+                            throw new GameException("Game is not found");
+                        });
+    }
+
+    @Override
+    public Optional<GameDetails> findByIdAndPlayer(String id, String player) {
+        return this.gameRepository.findById(id)
+                .filter(game -> game.findPlayer(player).isPresent())
+                .map(GameDetails::of);
+    }
+
+    @Override
+    public Optional<SynchronousPlayer> renamePlayer(String id, String oldName, String newName) {
+        return this.gameRepository.findById(id)
+                .flatMap(game->game.findPlayer(oldName))
+                .or(()->{throw  new GameException("Player '" + oldName + "' is not found");})
+                .map(pl->pl.setName(newName));
     }
 }

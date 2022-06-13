@@ -4,13 +4,15 @@ import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.exception.GameException;
+import com.eleks.academy.whoami.model.response.PlayerState;
+import com.eleks.academy.whoami.model.response.PlayersWithState;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.IdGenerator;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -21,8 +23,12 @@ public class PersistentGame implements SynchronousGame {
     private final IdGenerator uuid;
     private final Integer maxPlayers;
     private final List<SynchronousPlayer> players = new ArrayList<>();
+    private final Map<String, String> characterMap = new ConcurrentHashMap<>();
+    private final Map<String, PlayerState> playersState = new ConcurrentHashMap<>();
+    public static final long SUGGESTING_CHARACTER_TIME_OUT = 120;
 
     private GameState state;
+    private long initialTime;
 
     public PersistentGame(String hostPlayer, Integer maxPlayers, IdGenerator uuid) {
         this.uuid = uuid;
@@ -30,6 +36,7 @@ public class PersistentGame implements SynchronousGame {
         this.maxPlayers = maxPlayers;
         state = GameState.WAITING_FOR_PLAYER;
         players.add(new PersistentPlayer(hostPlayer));
+        playersState.put(hostPlayer, PlayerState.NOT_READY);
     }
 
     @Override
@@ -56,8 +63,10 @@ public class PersistentGame implements SynchronousGame {
                     });
             if (players.size() < this.maxPlayers) {
                 players.add(player);
+                playersState.put(player.getName(), PlayerState.NOT_READY);
                 if (players.size() == maxPlayers) {
                     state = GameState.SUGGESTING_CHARACTER;
+                    initialTime = System.currentTimeMillis();
                 }
                 return this;
             }
@@ -83,7 +92,48 @@ public class PersistentGame implements SynchronousGame {
     }
 
     @Override
-    public List<SynchronousPlayer> getPlayersInGame() {
-        return players;
+    public List<PlayersWithState> getPlayersInGame() {
+        return players.stream()
+                .map(pl -> PlayersWithState.builder()
+                        .player(pl)
+                        .state(playersState.getOrDefault(pl.getName(),PlayerState.NOT_READY))
+                        .build())
+                .toList();
+    }
+
+    @Override
+    public void setCharacter(String player, String character) {
+        turnLock.lock();
+        try {
+            players.stream()
+                    .filter(pl -> pl.getName().equals(player))
+                    .findFirst()
+                    .or(() -> {
+                        throw new GameException("Player '" + player + "' is not found");
+                    })
+                    .filter(plr -> !characterMap.containsKey(plr.getName()))
+                    .or(() -> {
+                        throw new GameException("You already suggested character");
+                    })
+                    .filter(f -> isTimeOut(initialTime, SUGGESTING_CHARACTER_TIME_OUT))
+                    .or(() -> {
+                        state = GameState.FINISHED;
+                        throw new GameException("Time is out");
+                    })
+                    .ifPresent(synchronousPlayer -> {
+                        synchronousPlayer.setCharacter(character);
+                        characterMap.put(player, character);
+                        playersState.put(synchronousPlayer.getName(),PlayerState.READY);
+                        if (characterMap.size() == maxPlayers) {
+                            state = GameState.PROCESSING_QUESTION;
+                        }
+                    });
+        } finally {
+            turnLock.unlock();
+        }
+    }
+
+    private boolean isTimeOut(long compareTime, long duration) {
+        return (System.currentTimeMillis() - compareTime) <= TimeUnit.SECONDS.toMillis(duration);
     }
 }

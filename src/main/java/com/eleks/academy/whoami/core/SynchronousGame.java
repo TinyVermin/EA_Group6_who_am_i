@@ -13,10 +13,10 @@ public interface SynchronousGame extends Game {
 
     Integer getCountPlayersInGame();
 
-    List<SynchronousPlayer> getPlayersInGame();
-
     GameState getStatus();
 
     boolean isAvailable();
+
+    void setCharacter(String player, String character);
 
 }
