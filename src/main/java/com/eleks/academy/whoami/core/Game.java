@@ -1,5 +1,9 @@
 package com.eleks.academy.whoami.core;
 
-public interface Game {
+import com.eleks.academy.whoami.model.response.PlayersWithState;
 
+import java.util.List;
+
+public interface Game {
+    List<PlayersWithState> getPlayersInGame();
 }

@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 
@@ -24,6 +27,16 @@ public class GameControllerAdvice extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleGameException(GameException gameException) {
         return gameException::getMessage;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<Object> handleException(ConstraintViolationException e) {
+        return e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage)
+                .collect(collectingAndThen(toList(),
+                        details -> ResponseEntity.badRequest()
+                                .body(new ErrorResponse("Validation failed!", details))));
     }
 
     @Override
