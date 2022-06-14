@@ -22,7 +22,7 @@ public class GameLight {
         return GameLight.builder()
                 .id(game.getId())
                 .status(game.getStatus())
-                .playersInGame(game.getCountPlayersInGame().toString())
+                .playersInGame(Integer.toString(game.getPlayersInGame().size()))
                 .build();
     }
 }
