@@ -84,7 +84,7 @@ public class PersistentGame implements  SynchronousGame {
     @Override
     public SynchronousGame leaveGame(SynchronousPlayer player) {
         if(isAvailable()|| state == GameState.SUGGESTING_CHARACTER) {
-            players.removeIf(p -> p.getName().equals(player.toString()));
+            players.removeIf(p -> p.getName().equals(player.getName()));
         }   
            return this;
     }
