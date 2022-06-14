@@ -5,5 +5,5 @@ import com.eleks.academy.whoami.model.response.PlayersWithState;
 import java.util.List;
 
 public interface Game {
-    List<PlayersWithState> getPlayersInGame();
+    List<PlayersWithState> getPlayersInGameWithState();
 }

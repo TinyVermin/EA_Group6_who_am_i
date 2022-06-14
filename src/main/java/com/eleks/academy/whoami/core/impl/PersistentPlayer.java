@@ -1,16 +1,24 @@
 package com.eleks.academy.whoami.core.impl;
 
 import com.eleks.academy.whoami.core.SynchronousPlayer;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.Objects;
 
 public class PersistentPlayer implements SynchronousPlayer {
-
+    @JsonIgnore
+    private final String id;
     private String name;
     private String character;
 
-    public PersistentPlayer(String name) {
+    public PersistentPlayer(String name, String id) {
         this.name = Objects.requireNonNull(name);
+        this.id = id;
+    }
+
+    @Override
+    public String getId() {
+        return this.id;
     }
 
     @Override

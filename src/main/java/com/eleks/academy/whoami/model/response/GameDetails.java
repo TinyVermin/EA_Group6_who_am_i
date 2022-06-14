@@ -25,7 +25,7 @@ public class GameDetails {
         return GameDetails.builder()
                 .id(game.getId())
                 .status(game.getStatus())
-                .players(game.getPlayersInGame())
+                .players(game.getPlayersInGameWithState())
                 .build();
     }
 

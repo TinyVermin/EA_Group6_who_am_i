@@ -20,7 +20,6 @@ public class PersistentGame implements SynchronousGame {
 
     private final Lock turnLock = new ReentrantLock();
     private final String id;
-    private final IdGenerator uuid;
     private final Integer maxPlayers;
     private final List<SynchronousPlayer> players = new ArrayList<>();
     private final Map<String, String> characterMap = new ConcurrentHashMap<>();
@@ -31,18 +30,18 @@ public class PersistentGame implements SynchronousGame {
     private long initialTime;
 
     public PersistentGame(String hostPlayer, Integer maxPlayers, IdGenerator uuid) {
-        this.uuid = uuid;
         this.id = uuid.generateId().toString();
         this.maxPlayers = maxPlayers;
         state = GameState.WAITING_FOR_PLAYER;
-        players.add(new PersistentPlayer(hostPlayer));
-        playersState.put(hostPlayer, PlayerState.NOT_READY);
+        var persistentPlayer = new PersistentPlayer(hostPlayer, uuid.generateId().toString());
+        players.add(persistentPlayer);
+        playersState.put(persistentPlayer.getId(), PlayerState.NOT_READY);
     }
 
     @Override
     public Optional<SynchronousPlayer> findPlayer(String player) {
         return players.stream()
-                .filter(pl -> pl.getName().equals(player))
+                .filter(existingPlayer -> existingPlayer.getName().equals(player))
                 .findFirst();
     }
 
@@ -56,14 +55,14 @@ public class PersistentGame implements SynchronousGame {
         turnLock.lock();
         try {
             players.stream()
-                    .filter(f -> f.getName().equals(player.getName()))
+                    .filter(newPlayer -> newPlayer.getName().equals(player.getName()))
                     .findFirst()
                     .ifPresent(m -> {
                         throw new GameException("Player already exist");
                     });
             if (players.size() < this.maxPlayers) {
                 players.add(player);
-                playersState.put(player.getName(), PlayerState.NOT_READY);
+                playersState.put(player.getId(), PlayerState.NOT_READY);
                 if (players.size() == maxPlayers) {
                     state = GameState.SUGGESTING_CHARACTER;
                     initialTime = System.currentTimeMillis();
@@ -87,16 +86,16 @@ public class PersistentGame implements SynchronousGame {
     }
 
     @Override
-    public Integer getCountPlayersInGame() {
-        return players.size();
+    public List<SynchronousPlayer> getPlayersInGame() {
+        return this.players;
     }
 
     @Override
-    public List<PlayersWithState> getPlayersInGame() {
+    public List<PlayersWithState> getPlayersInGameWithState() {
         return players.stream()
-                .map(pl -> PlayersWithState.builder()
-                        .player(pl)
-                        .state(playersState.getOrDefault(pl.getName(),PlayerState.NOT_READY))
+                .map(player -> PlayersWithState.builder()
+                        .player(player)
+                        .state(playersState.getOrDefault(player.getId(), PlayerState.NOT_READY))
                         .build())
                 .toList();
     }
@@ -106,24 +105,24 @@ public class PersistentGame implements SynchronousGame {
         turnLock.lock();
         try {
             players.stream()
-                    .filter(pl -> pl.getName().equals(player))
+                    .filter(existingPlayer -> existingPlayer.getName().equals(player))
                     .findFirst()
                     .or(() -> {
                         throw new GameException("Player '" + player + "' is not found");
                     })
-                    .filter(plr -> !characterMap.containsKey(plr.getName()))
+                    .filter(existingPlayer -> !characterMap.containsKey(existingPlayer.getId()))
                     .or(() -> {
                         throw new GameException("You already suggested character");
                     })
-                    .filter(f -> isTimeOut(initialTime, SUGGESTING_CHARACTER_TIME_OUT))
+                    .filter(timer -> isTimeOut(initialTime, SUGGESTING_CHARACTER_TIME_OUT))
                     .or(() -> {
                         state = GameState.FINISHED;
                         throw new GameException("Time is out");
                     })
                     .ifPresent(synchronousPlayer -> {
                         synchronousPlayer.setCharacter(character);
-                        characterMap.put(player, character);
-                        playersState.put(synchronousPlayer.getName(),PlayerState.READY);
+                        characterMap.put(synchronousPlayer.getId(), character);
+                        playersState.put(synchronousPlayer.getId(), PlayerState.READY);
                         if (characterMap.size() == maxPlayers) {
                             state = GameState.PROCESSING_QUESTION;
                         }
