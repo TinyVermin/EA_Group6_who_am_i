@@ -48,13 +48,11 @@ public class GameServiceImpl implements GameService {
 
     
     @Override
-    public SynchronousGame leaveGame(SynchronousPlayer player, String id) {    
-        return this.gameRepository.findById(id)
-        .filter(SynchronousGame::isAvailable)
+    public SynchronousGame leaveGame(SynchronousPlayer player, String id) {   
+        return this.gameRepository.findById(id).filter(SynchronousGame::isAvailable)
         .map(game -> game.leaveGame(player))
-        .flatMap(m -> m.findPlayer(player.getName()))      
         .orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Game finished. Player has left game")
+            () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Player has left game")
         );
 
     }
