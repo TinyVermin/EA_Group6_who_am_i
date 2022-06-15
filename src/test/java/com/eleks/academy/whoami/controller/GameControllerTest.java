@@ -186,4 +186,32 @@ class GameControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Validation failed!"));
     }
+
+    @Test
+    void startGame() throws Exception {
+        var game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
+        game.enrollToGame(new PersistentPlayer("Sam", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Jack", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Kat", uuidGenerator.generateId().toString()));
+        game.setCharacter("Pol", "Batman");
+        game.setCharacter("Sam", "SuperMan");
+        game.setCharacter("Jack", "SpiderMan");
+        game.setCharacter("Kat", "IronMan");
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games/" + game.getId())
+                                .header("X-Player", "Pol"))
+                .andExpect(status().isOk());
+
+    }
+
+    @Test
+    void startGameThrowExceptionGame() throws Exception {
+        var game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games/" + game.getId())
+                                .header("X-Player", "Pol"))
+                .andExpect(status().isBadRequest());
+    }
 }
