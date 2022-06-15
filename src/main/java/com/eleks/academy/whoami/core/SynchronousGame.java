@@ -19,5 +19,5 @@ public interface SynchronousGame extends Game {
 
     void setCharacter(String player, String character);
 
-
+    SynchronousGame start();
 }

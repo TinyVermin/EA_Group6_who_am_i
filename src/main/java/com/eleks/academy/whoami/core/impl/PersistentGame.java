@@ -23,6 +23,7 @@ public class PersistentGame implements SynchronousGame {
     private final Integer maxPlayers;
     private final List<SynchronousPlayer> players = new ArrayList<>();
     private final Map<String, String> characterMap = new ConcurrentHashMap<>();
+    private final List<String> characters = new ArrayList<>();
     private final Map<String, PlayerState> playersState = new ConcurrentHashMap<>();
     public static final long SUGGESTING_CHARACTER_TIME_OUT = 120;
 
@@ -122,6 +123,7 @@ public class PersistentGame implements SynchronousGame {
                     .ifPresent(synchronousPlayer -> {
                         synchronousPlayer.setCharacter(character);
                         characterMap.put(synchronousPlayer.getId(), character);
+                        characters.add(character);
                         playersState.put(synchronousPlayer.getId(), PlayerState.READY);
                         if (characterMap.size() == maxPlayers) {
                             state = GameState.PROCESSING_QUESTION;
@@ -132,7 +134,27 @@ public class PersistentGame implements SynchronousGame {
         }
     }
 
+    @Override
+    public SynchronousGame start() {
+        mixCharacters(characters);
+        return this;
+    }
+
     private boolean isTimeOut(long compareTime, long duration) {
         return (System.currentTimeMillis() - compareTime) <= TimeUnit.SECONDS.toMillis(duration);
+    }
+
+    private void mixCharacters(List<String> characters) {
+        Random random = new Random();
+        this.characterMap.keySet().forEach(key -> {
+            String value = this.characterMap.get(key);
+            this.characterMap.compute(key, (k, v) -> {
+                int randomPos;
+                do {
+                    randomPos = random.nextInt(characters.size());
+                } while (characters.get(randomPos).equals(value));
+                return characters.remove(randomPos);
+            });
+        });
     }
 }

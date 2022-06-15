@@ -14,8 +14,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.util.List;
 
 import static com.eleks.academy.whoami.utils.StringUtils.Headers.PLAYER;
@@ -78,5 +76,13 @@ public class GameController {
         return this.gameService.renamePlayer(id, player, newName)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.badRequest().build());
+    }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<GameDetails> startGame(@PathVariable("id") String id,
+                                                 @RequestHeader(PLAYER) String player) {
+        return this.gameService.startGame(id, player)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }
