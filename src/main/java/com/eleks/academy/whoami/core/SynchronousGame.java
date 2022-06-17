@@ -23,8 +23,4 @@ public interface SynchronousGame extends Game{
 
     boolean isFinished();
 
-
-
-    
-
 }

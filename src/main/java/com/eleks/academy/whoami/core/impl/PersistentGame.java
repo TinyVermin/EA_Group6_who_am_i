@@ -11,6 +11,7 @@ import org.springframework.util.IdGenerator;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
@@ -84,8 +85,11 @@ public class PersistentGame implements  SynchronousGame {
     @Override
     public SynchronousGame leaveGame(SynchronousPlayer player) {
         if(isAvailable()|| state == GameState.SUGGESTING_CHARACTER) {
+            players.clear();
+            isFinished();
+        } else{
             players.removeIf(p -> p.getName().equals(player.getName()));
-        }   
+        }
            return this;
     }
 
@@ -93,6 +97,4 @@ public class PersistentGame implements  SynchronousGame {
     public boolean isFinished() {
         return state == GameState.GAME_FINISHED;
     }
-
-
 }
