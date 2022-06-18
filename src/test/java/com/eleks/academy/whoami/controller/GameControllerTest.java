@@ -1,6 +1,7 @@
 package com.eleks.academy.whoami.controller;
 
 import com.eleks.academy.whoami.core.GameState;
+import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
 import com.eleks.academy.whoami.model.response.PlayerState;
@@ -189,15 +190,7 @@ class GameControllerTest {
 
     @Test
     void startGame() throws Exception {
-        var game = new PersistentGame("Pol", 4, uuidGenerator);
-        gameRepository.save(game);
-        game.enrollToGame(new PersistentPlayer("Sam", uuidGenerator.generateId().toString()));
-        game.enrollToGame(new PersistentPlayer("Jack", uuidGenerator.generateId().toString()));
-        game.enrollToGame(new PersistentPlayer("Kat", uuidGenerator.generateId().toString()));
-        game.setCharacter("Pol", "Batman");
-        game.setCharacter("Sam", "SuperMan");
-        game.setCharacter("Jack", "SpiderMan");
-        game.setCharacter("Kat", "IronMan");
+        var game = initGame();
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId())
                                 .header("X-Player", "Pol"))
@@ -213,5 +206,41 @@ class GameControllerTest {
                         MockMvcRequestBuilders.post("/games/" + game.getId())
                                 .header("X-Player", "Pol"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void askQuestion() throws Exception {
+        var game = initGame();
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games/" + game.getId())
+                                .header("X-Player", "Pol")
+                                .content("""
+                                        {
+                                          "message": "Am i man?"
+                                        }""")
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void askQuestionThrowExceptionGame() throws Exception {
+        var game = new PersistentGame("Pol", 4, uuidGenerator);
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games/" + game.getId())
+                                .header("X-Player", "Pol"))
+                .andExpect(status().isBadRequest());
+    }
+
+    private SynchronousGame initGame() {
+        var game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
+        game.enrollToGame(new PersistentPlayer("Sam", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Jack", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Kat", uuidGenerator.generateId().toString()));
+        game.setCharacter("Pol", "Batman");
+        game.setCharacter("Sam", "SuperMan");
+        game.setCharacter("Jack", "SpiderMan");
+        game.setCharacter("Kat", "IronMan");
+        return game;
     }
 }
