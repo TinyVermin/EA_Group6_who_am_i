@@ -24,4 +24,6 @@ public interface GameService {
     Optional<SynchronousPlayer> renamePlayer(String id, String oldName, String newName);
 
     Optional<GameDetails> startGame(String id, String player);
+
+    void askQuestion(String id, String player, String message);
 }

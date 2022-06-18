@@ -3,6 +3,7 @@ package com.eleks.academy.whoami.controller;
 
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.model.request.CharacterSuggestion;
+import com.eleks.academy.whoami.model.request.Message;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.service.GameService;
@@ -84,5 +85,14 @@ public class GameController {
         return this.gameService.startGame(id, player)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/questions")
+    @ResponseStatus(HttpStatus.OK)
+    public void askQuestion(@PathVariable("id") String id,
+                            @RequestHeader(PLAYER) String player,
+                            @Valid @RequestBody Message message) {
+
+        this.gameService.askQuestion(id, player, message.getMessage());
     }
 }

@@ -1,9 +1,7 @@
 package com.eleks.academy.whoami.core;
 
-import com.eleks.academy.whoami.model.response.PlayersWithState;
-
-import java.util.List;
+import java.util.concurrent.Future;
 
 public interface Game {
-    List<PlayersWithState> getPlayersInGameWithState();
+     Future<GameState> play();
 }

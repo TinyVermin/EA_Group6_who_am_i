@@ -1,9 +1,11 @@
 package com.eleks.academy.whoami.core;
 
+import com.eleks.academy.whoami.model.response.PlayersWithState;
+
 import java.util.List;
 import java.util.Optional;
 
-public interface SynchronousGame extends Game {
+public interface SynchronousGame  {
 
     Optional<SynchronousPlayer> findPlayer(String player);
 
@@ -13,6 +15,8 @@ public interface SynchronousGame extends Game {
 
     List<SynchronousPlayer> getPlayersInGame();
 
+    List<PlayersWithState> getPlayersInGameWithState();
+
     GameState getStatus();
 
     boolean isAvailable();
@@ -20,4 +24,6 @@ public interface SynchronousGame extends Game {
     void setCharacter(String player, String character);
 
     SynchronousGame start();
+
+    void askQuestion(SynchronousPlayer player, String message);
 }

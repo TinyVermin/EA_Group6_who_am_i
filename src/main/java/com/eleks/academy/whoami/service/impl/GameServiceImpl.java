@@ -97,7 +97,7 @@ public class GameServiceImpl implements GameService {
                     throw new GameException(GAME_NOT_FOUND);
                 })
                 .map(game -> game.findPlayer(oldName))
-                .orElseThrow(() ->  new GameException("Player '" + oldName + "' is not found"));
+                .orElseThrow(() -> new GameException("Player '" + oldName + "' is not found"));
         currentGame
                 .map(SynchronousGame::getPlayersInGame)
                 .ifPresent(players -> players.stream()
@@ -116,11 +116,25 @@ public class GameServiceImpl implements GameService {
                 .or(() -> {
                     throw new GameException(GAME_NOT_FOUND);
                 })
-                .filter(game -> game.getStatus().equals(GameState.PROCESSING_QUESTION))
+                .filter(game -> game.getStatus().equals(GameState.READY_TO_START))
                 .or(() -> {
                     throw new GameException("Not available");
                 })
                 .map(SynchronousGame::start)
                 .map(GameDetails::of);
+    }
+
+    @Override
+    public void askQuestion(String id, String player, String message) {
+        var currentGame = this.gameRepository.findById(id)
+                .or(() -> {
+                    throw new GameException(GAME_NOT_FOUND);
+                });
+        var currentPlayer = currentGame
+                .flatMap(game -> game.findPlayer(player))
+                .orElseThrow(() -> {
+                    throw new GameException("Player '" + player + "' is not found");
+                });
+        currentGame.ifPresent(game -> game.askQuestion(currentPlayer, message));
     }
 }
