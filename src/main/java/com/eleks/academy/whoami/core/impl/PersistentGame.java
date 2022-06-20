@@ -1,5 +1,6 @@
 package com.eleks.academy.whoami.core.impl;
 
+import com.eleks.academy.whoami.core.Game;
 import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
@@ -11,6 +12,7 @@ import org.springframework.util.IdGenerator;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -24,7 +26,8 @@ public class PersistentGame implements SynchronousGame {
     private final List<SynchronousPlayer> players = new ArrayList<>();
     private final Map<String, String> characterMap = new ConcurrentHashMap<>();
     private final Map<String, PlayerState> playersState = new ConcurrentHashMap<>();
-    public static final long SUGGESTING_CHARACTER_TIME_OUT = 120;
+    public static final long SUGGESTING_CHARACTER_TIMEOUT = 120;
+    public static final long WAITING_QUESTION_TIMEOUT = 60;
 
     private GameState state;
     private long initialTime;
@@ -104,9 +107,7 @@ public class PersistentGame implements SynchronousGame {
     public void setCharacter(String player, String character) {
         turnLock.lock();
         try {
-            players.stream()
-                    .filter(existingPlayer -> existingPlayer.getName().equals(player))
-                    .findFirst()
+            findPlayer(player)
                     .or(() -> {
                         throw new GameException("Player '" + player + "' is not found");
                     })
@@ -114,17 +115,16 @@ public class PersistentGame implements SynchronousGame {
                     .or(() -> {
                         throw new GameException("You already suggested character");
                     })
-                    .filter(timer -> isTimeOut(initialTime, SUGGESTING_CHARACTER_TIME_OUT))
+                    .filter(timer -> isTimeOut(initialTime, SUGGESTING_CHARACTER_TIMEOUT))
                     .or(() -> {
                         state = GameState.FINISHED;
                         throw new GameException("Time is out");
                     })
                     .ifPresent(synchronousPlayer -> {
-                        synchronousPlayer.setCharacter(character);
                         characterMap.put(synchronousPlayer.getId(), character);
                         playersState.put(synchronousPlayer.getId(), PlayerState.READY);
                         if (characterMap.size() == maxPlayers) {
-                            state = GameState.PROCESSING_QUESTION;
+                            state = GameState.READY_TO_START;
                         }
                     });
         } finally {
@@ -132,7 +132,51 @@ public class PersistentGame implements SynchronousGame {
         }
     }
 
+    @Override
+    public SynchronousGame start() {
+        mixCharacters(new ArrayList<>(characterMap.values()));
+        characterMap.forEach((playerId, character) -> players.stream()
+                .filter(f -> f.getId().equals(playerId))
+                .findFirst()
+                .ifPresent(player -> player.setCharacter(character)));
+        state = GameState.PROCESSING_QUESTION;
+        initialTime = System.currentTimeMillis();
+        CompletableFuture.supplyAsync(() -> {
+            Game gameLoop = new GameLoop(players, characterMap);
+            return gameLoop.play();
+        }).thenAccept(gameState -> state = ((CompletableFuture<GameState>) gameState).join());
+        return this;
+    }
+
+    @Override
+    public void askQuestion(SynchronousPlayer player, String message) {
+        Optional.of(player)
+                .filter(timer -> isTimeOut(initialTime, WAITING_QUESTION_TIMEOUT))
+                .or(() -> {
+                    playersState.compute(player.getId(), (k, v) -> PlayerState.FINISHED);
+                    throw new GameException("Time is out");
+                })
+                .ifPresent(synchronousPlayer -> synchronousPlayer.setAnswer(Answer.builder()
+                        .state(PlayerState.ASKING)
+                        .message(message)
+                        .build()));
+    }
+
     private boolean isTimeOut(long compareTime, long duration) {
         return (System.currentTimeMillis() - compareTime) <= TimeUnit.SECONDS.toMillis(duration);
+    }
+
+    private void mixCharacters(List<String> characters) {
+        Random random = new Random();
+        this.characterMap.keySet().forEach(key -> {
+            String value = this.characterMap.get(key);
+            this.characterMap.compute(key, (k, v) -> {
+                int randomPos;
+                do {
+                    randomPos = random.nextInt(characters.size());
+                } while (characters.get(randomPos).equals(value));
+                return characters.remove(randomPos);
+            });
+        });
     }
 }

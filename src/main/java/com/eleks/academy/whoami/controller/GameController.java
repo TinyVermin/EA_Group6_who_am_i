@@ -3,6 +3,7 @@ package com.eleks.academy.whoami.controller;
 
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.model.request.CharacterSuggestion;
+import com.eleks.academy.whoami.model.request.Message;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.service.GameService;
@@ -14,8 +15,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.util.List;
 
 import static com.eleks.academy.whoami.utils.StringUtils.Headers.PLAYER;
@@ -78,5 +77,22 @@ public class GameController {
         return this.gameService.renamePlayer(id, player, newName)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.badRequest().build());
+    }
+
+    @PostMapping("/{id}")
+    public ResponseEntity<GameDetails> startGame(@PathVariable("id") String id,
+                                                 @RequestHeader(PLAYER) String player) {
+        return this.gameService.startGame(id, player)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/questions")
+    @ResponseStatus(HttpStatus.OK)
+    public void askQuestion(@PathVariable("id") String id,
+                            @RequestHeader(PLAYER) String player,
+                            @Valid @RequestBody Message message) {
+
+        this.gameService.askQuestion(id, player, message.getMessage());
     }
 }

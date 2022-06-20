@@ -26,6 +26,7 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final IdGenerator uuidGenerator;
     public static final String GAME_NOT_FOUND = "Game is not found";
+    public static final String NOT_AVAILABLE = "Not available";
 
     @Override
     public Optional<SynchronousPlayer> enrollToGame(String id, String player) {
@@ -74,7 +75,7 @@ public class GameServiceImpl implements GameService {
                 })
                 .filter(state -> state.getStatus() == GameState.SUGGESTING_CHARACTER)
                 .or(() -> {
-                    throw new GameException("Not available");
+                    throw new GameException(NOT_AVAILABLE);
                 })
                 .ifPresent(game -> game.setCharacter(player, character));
     }
@@ -97,9 +98,7 @@ public class GameServiceImpl implements GameService {
                     throw new GameException(GAME_NOT_FOUND);
                 })
                 .map(game -> game.findPlayer(oldName))
-                .orElseThrow(() -> {
-                    throw new GameException("Player '" + oldName + "' is not found");
-                });
+                .orElseThrow(() -> new GameException("Player '" + oldName + "' is not found"));
         currentGame
                 .map(SynchronousGame::getPlayersInGame)
                 .ifPresent(players -> players.stream()
@@ -109,5 +108,38 @@ public class GameServiceImpl implements GameService {
                         ));
         return synchronousPlayer
                 .map(player -> player.setName(newName));
+    }
+
+
+    @Override
+    public Optional<GameDetails> startGame(String id, String player) {
+        return this.gameRepository.findById(id)
+                .or(() -> {
+                    throw new GameException(GAME_NOT_FOUND);
+                })
+                .filter(game -> game.getStatus().equals(GameState.READY_TO_START))
+                .or(() -> {
+                    throw new GameException(NOT_AVAILABLE);
+                })
+                .map(SynchronousGame::start)
+                .map(GameDetails::of);
+    }
+
+    @Override
+    public void askQuestion(String id, String player, String message) {
+        var currentGame = this.gameRepository.findById(id)
+                .or(() -> {
+                    throw new GameException(GAME_NOT_FOUND);
+                })
+                .filter(game -> game.getStatus().equals(GameState.PROCESSING_QUESTION))
+                .or(() -> {
+                    throw new GameException(NOT_AVAILABLE);
+                });
+        var currentPlayer = currentGame
+                .flatMap(game -> game.findPlayer(player))
+                .orElseThrow(() -> {
+                    throw new GameException("Player '" + player + "' is not found");
+                });
+        currentGame.ifPresent(game -> game.askQuestion(currentPlayer, message));
     }
 }
