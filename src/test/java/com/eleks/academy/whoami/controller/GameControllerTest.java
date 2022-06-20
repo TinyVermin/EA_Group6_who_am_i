@@ -16,7 +16,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.IdGenerator;
 import org.springframework.util.SimpleIdGenerator;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,7 +28,7 @@ class GameControllerTest {
     GameRepository gameRepository;
     IdGenerator uuidGenerator;
     SynchronousGame game;
-    String gameId;
+    
 
     @BeforeEach
     void init() {
@@ -75,5 +74,22 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
                 .andExpect(jsonPath("$.status").value(GameState.SUGGESTING_CHARACTER.toString()))
                 .andExpect(jsonPath("$.playersInGame").value(4));
+    }
+
+    @Test
+    void changeStatusAfterAddedLastPlayers_leaveGame() throws Exception {
+        game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
+        game.enrollToGame(new PersistentPlayer("Sam"));
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.get("/games/" + game.getId() + "/leave-game")
+                                .header("X-Player", "Pol")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
+                .andExpect(jsonPath("$.status").value(GameState.GAME_FINISHED.toString()))
+                .andExpect(jsonPath("$.playersInGame").value(0));
+        
+        
     }
 }

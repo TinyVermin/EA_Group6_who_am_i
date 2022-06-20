@@ -84,17 +84,30 @@ public class PersistentGame implements  SynchronousGame {
 
     @Override
     public SynchronousGame leaveGame(SynchronousPlayer player) {
-        if(isAvailable()|| state == GameState.SUGGESTING_CHARACTER) {
-            players.clear();
-            isFinished();
-        } else{
-            players.removeIf(p -> p.getName().equals(player.getName()));
+        turnLock.lock();
+        try {
+            if (isNotFinished()) {
+                players.clear();
+                state = GameState.GAME_FINISHED;
+                return this;
+            } else {
+                players.removeIf(p -> p.getName().equals(player.getName()));
+                return this;
+            }
+        } finally {
+            turnLock.unlock();
         }
-           return this;
     }
 
     @Override
     public boolean isFinished() {
         return state == GameState.GAME_FINISHED;
     }
+
+    @Override
+    public boolean isNotFinished() {
+        return state == GameState.WAITING_FOR_PLAYER || state == GameState.SUGGESTING_CHARACTER;        
+    }
+
+    
 }

@@ -1,6 +1,7 @@
 package com.eleks.academy.whoami.service.impl;
 
 import com.eleks.academy.whoami.core.impl.PersistentGame;
+import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
@@ -49,12 +50,11 @@ public class GameServiceImpl implements GameService {
     
     @Override
     public SynchronousGame leaveGame(SynchronousPlayer player, String id) {   
-        return this.gameRepository.findById(id).filter(SynchronousGame::isAvailable)
+        return this.gameRepository.findById(id).filter(SynchronousGame::isNotFinished)
         .map(game -> game.leaveGame(player))
         .orElseThrow(
             () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Player has left game")
         );
-
     }
 
 }
