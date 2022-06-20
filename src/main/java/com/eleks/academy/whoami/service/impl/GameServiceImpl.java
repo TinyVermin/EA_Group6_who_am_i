@@ -26,6 +26,7 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final IdGenerator uuidGenerator;
     public static final String GAME_NOT_FOUND = "Game is not found";
+    public static final String NOT_AVAILABLE = "Not available";
 
     @Override
     public Optional<SynchronousPlayer> enrollToGame(String id, String player) {
@@ -74,7 +75,7 @@ public class GameServiceImpl implements GameService {
                 })
                 .filter(state -> state.getStatus() == GameState.SUGGESTING_CHARACTER)
                 .or(() -> {
-                    throw new GameException("Not available");
+                    throw new GameException(NOT_AVAILABLE);
                 })
                 .ifPresent(game -> game.setCharacter(player, character));
     }
@@ -118,7 +119,7 @@ public class GameServiceImpl implements GameService {
                 })
                 .filter(game -> game.getStatus().equals(GameState.READY_TO_START))
                 .or(() -> {
-                    throw new GameException("Not available");
+                    throw new GameException(NOT_AVAILABLE);
                 })
                 .map(SynchronousGame::start)
                 .map(GameDetails::of);
@@ -129,6 +130,10 @@ public class GameServiceImpl implements GameService {
         var currentGame = this.gameRepository.findById(id)
                 .or(() -> {
                     throw new GameException(GAME_NOT_FOUND);
+                })
+                .filter(game -> game.getStatus().equals(GameState.PROCESSING_QUESTION))
+                .or(() -> {
+                    throw new GameException(NOT_AVAILABLE);
                 });
         var currentPlayer = currentGame
                 .flatMap(game -> game.findPlayer(player))
