@@ -1,6 +1,7 @@
 package com.eleks.academy.whoami.core;
 
 import com.eleks.academy.whoami.core.impl.Answer;
+import com.eleks.academy.whoami.model.response.PlayerState;
 
 public interface SynchronousPlayer extends Player {
 
@@ -10,7 +11,7 @@ public interface SynchronousPlayer extends Player {
 
     void setCharacter(String character);
 
-    String getCharacter();
+    PlayerState getState();
 
     void setAnswer(Answer answer);
 

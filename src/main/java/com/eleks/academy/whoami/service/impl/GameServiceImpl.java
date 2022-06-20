@@ -6,6 +6,7 @@ import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
+import com.eleks.academy.whoami.model.request.PlayersAnswer;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.repository.GameRepository;
@@ -29,10 +30,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Optional<SynchronousPlayer> enrollToGame(String id, String player) {
-        SynchronousPlayer synchronousPlayer = this.gameRepository.findById(id)
-                .or(() -> {
-                    throw new GameException(GAME_NOT_FOUND);
-                })
+        SynchronousPlayer synchronousPlayer = this.findGame(id)
                 .filter(SynchronousGame::isAvailable)
                 .map(game -> game.enrollToGame(new PersistentPlayer(player, uuidGenerator.generateId().toString())))
                 .flatMap(m -> m.findPlayer(player))
@@ -68,10 +66,7 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void suggestCharacter(String id, String player, String character) {
-        this.gameRepository.findById(id)
-                .or(() -> {
-                    throw new GameException(GAME_NOT_FOUND);
-                })
+        this.findGame(id)
                 .filter(state -> state.getStatus() == GameState.SUGGESTING_CHARACTER)
                 .or(() -> {
                     throw new GameException("Not available");
@@ -81,23 +76,15 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Optional<GameDetails> findByIdAndPlayer(String id, String player) {
-        return this.gameRepository.findById(id)
-                .or(() -> {
-                    throw new GameException(GAME_NOT_FOUND);
-                })
+        return this.findGame(id)
                 .filter(game -> game.findPlayer(player).isPresent())
                 .map(GameDetails::of);
     }
 
     @Override
     public Optional<SynchronousPlayer> renamePlayer(String id, String oldName, String newName) {
-        var currentGame = this.gameRepository.findById(id);
-        var synchronousPlayer = currentGame
-                .or(() -> {
-                    throw new GameException(GAME_NOT_FOUND);
-                })
-                .map(game -> game.findPlayer(oldName))
-                .orElseThrow(() -> new GameException("Player '" + oldName + "' is not found"));
+        var currentGame = this.findGame(id);
+        var synchronousPlayer = findPlayer(id, oldName);
         currentGame
                 .map(SynchronousGame::getPlayersInGame)
                 .ifPresent(players -> players.stream()
@@ -105,17 +92,14 @@ public class GameServiceImpl implements GameService {
                         .findFirst()
                         .orElseThrow(() -> new GameException("Player with name '" + newName + "' already exist")
                         ));
-        return synchronousPlayer
+        return Optional.of(synchronousPlayer)
                 .map(player -> player.setName(newName));
     }
 
 
     @Override
     public Optional<GameDetails> startGame(String id, String player) {
-        return this.gameRepository.findById(id)
-                .or(() -> {
-                    throw new GameException(GAME_NOT_FOUND);
-                })
+        return this.findGame(id)
                 .filter(game -> game.getStatus().equals(GameState.READY_TO_START))
                 .or(() -> {
                     throw new GameException("Not available");
@@ -126,15 +110,34 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void askQuestion(String id, String player, String message) {
-        var currentGame = this.gameRepository.findById(id)
+        var currentGame = this.findGame(id);
+        var currentPlayer = findPlayer(id, player);
+        currentGame.ifPresent(game -> game.askQuestion(currentPlayer, message));
+    }
+
+    @Override
+    public void answerQuestion(String id, String player, String answer) {
+        var currentGame = this.findGame(id);
+        var currentPlayer = findPlayer(id, player);
+        try {
+            currentGame.ifPresent(game -> game.answerQuestion(currentPlayer, PlayersAnswer.valueOf(answer.toUpperCase())));
+        }catch (IllegalArgumentException e){
+            throw new GameException("Value '" + answer + "' is not correct. Use: yes, no, not_sure");
+        }
+    }
+
+    private Optional<SynchronousGame> findGame(String id) {
+        return this.gameRepository.findById(id)
                 .or(() -> {
                     throw new GameException(GAME_NOT_FOUND);
                 });
-        var currentPlayer = currentGame
+    }
+
+    private SynchronousPlayer findPlayer(String id, String player) {
+        return this.findGame(id)
                 .flatMap(game -> game.findPlayer(player))
                 .orElseThrow(() -> {
                     throw new GameException("Player '" + player + "' is not found");
                 });
-        currentGame.ifPresent(game -> game.askQuestion(currentPlayer, message));
     }
 }
