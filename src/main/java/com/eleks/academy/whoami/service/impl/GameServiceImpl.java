@@ -27,6 +27,7 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final IdGenerator uuidGenerator;
     public static final String GAME_NOT_FOUND = "Game is not found";
+    private static final String NOT_AVAILABLE = "Not available";
 
     @Override
     public Optional<SynchronousPlayer> enrollToGame(String id, String player) {
@@ -69,7 +70,7 @@ public class GameServiceImpl implements GameService {
         this.findGame(id)
                 .filter(state -> state.getStatus() == GameState.SUGGESTING_CHARACTER)
                 .or(() -> {
-                    throw new GameException("Not available");
+                    throw new GameException(NOT_AVAILABLE);
                 })
                 .ifPresent(game -> game.setCharacter(player, character));
     }
@@ -86,6 +87,10 @@ public class GameServiceImpl implements GameService {
         var currentGame = this.findGame(id);
         var synchronousPlayer = findPlayer(id, oldName);
         currentGame
+                .filter(game -> game.getStatus().equals(GameState.SUGGESTING_CHARACTER))
+                .or(() -> {
+                    throw new GameException(NOT_AVAILABLE);
+                })
                 .map(SynchronousGame::getPlayersInGame)
                 .ifPresent(players -> players.stream()
                         .filter(f -> !f.getName().equals(newName))
@@ -102,7 +107,7 @@ public class GameServiceImpl implements GameService {
         return this.findGame(id)
                 .filter(game -> game.getStatus().equals(GameState.READY_TO_START))
                 .or(() -> {
-                    throw new GameException("Not available");
+                    throw new GameException(NOT_AVAILABLE);
                 })
                 .map(SynchronousGame::start)
                 .map(GameDetails::of);
@@ -112,7 +117,12 @@ public class GameServiceImpl implements GameService {
     public void askQuestion(String id, String player, String message) {
         var currentGame = this.findGame(id);
         var currentPlayer = findPlayer(id, player);
-        currentGame.ifPresent(game -> game.askQuestion(currentPlayer, message));
+        currentGame
+                .filter(game -> game.getStatus().equals(GameState.PROCESSING_QUESTION))
+                .or(() -> {
+                    throw new GameException(NOT_AVAILABLE);
+                })
+                .ifPresent(game -> game.askQuestion(currentPlayer, message));
     }
 
     @Override
@@ -120,8 +130,13 @@ public class GameServiceImpl implements GameService {
         var currentGame = this.findGame(id);
         var currentPlayer = findPlayer(id, player);
         try {
-            currentGame.ifPresent(game -> game.answerQuestion(currentPlayer, PlayersAnswer.valueOf(answer.toUpperCase())));
-        }catch (IllegalArgumentException e){
+            currentGame
+                    .filter(game -> game.getStatus().equals(GameState.PROCESSING_QUESTION))
+                    .or(() -> {
+                        throw new GameException(NOT_AVAILABLE);
+                    })
+                    .ifPresent(game -> game.answerQuestion(currentPlayer, PlayersAnswer.valueOf(answer.toUpperCase())));
+        } catch (IllegalArgumentException e) {
             throw new GameException("Value '" + answer + "' is not correct. Use: yes, no, not_sure");
         }
     }
