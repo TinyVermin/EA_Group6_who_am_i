@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.eleks.academy.whoami.model.response.PlayerState.*;
+
 public class PersistentGame implements SynchronousGame {
 
     private final Lock turnLock = new ReentrantLock();
@@ -28,6 +30,7 @@ public class PersistentGame implements SynchronousGame {
     public static final long WAITING_QUESTION_TIMEOUT = 60;
     public static final long WAITING_ANSWER_TIMEOUT = 20;
     public static final String TIME_OVER = "Time is over";
+    private static final String NOT_AVAILABLE = "Not available";
 
     private GameState state;
 
@@ -149,14 +152,14 @@ public class PersistentGame implements SynchronousGame {
 
     @Override
     public void askQuestion(SynchronousPlayer player, String message) {
-        Optional.of(player)
+        isAvailableState(player, ASKING)
                 .filter(timer -> isTimeOut(gameData.getInitialTime(), WAITING_QUESTION_TIMEOUT))
                 .or(() -> {
-                    gameData.updatePlayerState(player.getId(), PlayerState.LOSER);
+                    gameData.updatePlayerState(player.getId(), LOSER);
                     throw new GameException(TIME_OVER);
                 })
                 .ifPresent(synchronousPlayer -> synchronousPlayer.setAnswer(Answer.builder()
-                        .state(PlayerState.ASKING)
+                        .state(ASKING)
                         .message(message)
                         .build()));
     }
@@ -166,12 +169,12 @@ public class PersistentGame implements SynchronousGame {
         turnLock.lock();
         var playerId = player.getId();
         try {
-            Optional.of(player)
+            isAvailableState(player, ANSWERING)
                     .filter(timer -> isTimeOut(gameData.getInitialTime(), WAITING_ANSWER_TIMEOUT))
                     .or(() -> {
                         var counter = gameData.getInactivityCounter(playerId);
                         if (counter == 3) {
-                            gameData.updatePlayerState(playerId, PlayerState.LOSER);
+                            gameData.updatePlayerState(playerId, LOSER);
                             return Optional.empty();
                         }
                         gameData.incrementInactivityCounter(playerId);
@@ -179,7 +182,7 @@ public class PersistentGame implements SynchronousGame {
                     })
                     .ifPresent(synchronousPlayer -> {
                         synchronousPlayer.setAnswer(Answer.builder()
-                                .state(PlayerState.ANSWERING)
+                                .state(ANSWERING)
                                 .message(answer.toString())
                                 .build());
                         gameData.clearInactivityCounter(playerId);
@@ -187,6 +190,15 @@ public class PersistentGame implements SynchronousGame {
         } finally {
             turnLock.unlock();
         }
+    }
+
+    private Optional<SynchronousPlayer> isAvailableState(SynchronousPlayer player, PlayerState playerState) {
+        return Optional.of(gameData)
+                .filter(status -> status.getPlayerState(player.getId()).equals(playerState))
+                .or(() -> {
+                    throw new GameException(NOT_AVAILABLE);
+                })
+                .map(then -> player);
     }
 
     private boolean isTimeOut(long compareTime, long duration) {
