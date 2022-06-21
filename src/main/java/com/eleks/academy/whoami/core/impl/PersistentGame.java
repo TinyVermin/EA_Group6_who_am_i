@@ -30,7 +30,6 @@ public class PersistentGame implements SynchronousGame {
     public static final String TIME_OVER = "Time is over";
 
     private GameState state;
-    private long initialTime;
 
     public PersistentGame(String hostPlayer, Integer maxPlayers, IdGenerator uuid) {
         this.id = uuid.generateId().toString();
@@ -69,7 +68,7 @@ public class PersistentGame implements SynchronousGame {
                 gameData.addPlayer(player);
                 if (gameData.countPlayers() == maxPlayers) {
                     state = GameState.SUGGESTING_CHARACTER;
-                    initialTime = System.currentTimeMillis();
+                    gameData.setInitialTime();
                 }
                 return this;
             }
@@ -117,7 +116,7 @@ public class PersistentGame implements SynchronousGame {
                     .or(() -> {
                         throw new GameException("You already suggested character");
                     })
-                    .filter(timer -> isTimeOut(initialTime, SUGGESTING_CHARACTER_TIMEOUT))
+                    .filter(timer -> isTimeOut(gameData.getInitialTime(), SUGGESTING_CHARACTER_TIMEOUT))
                     .or(() -> {
                         state = GameState.FINISHED;
                         throw new GameException(TIME_OVER);
@@ -145,14 +144,13 @@ public class PersistentGame implements SynchronousGame {
             Game gameLoop = new GameLoop(gameData);
             return gameLoop.play();
         }).thenAccept(gameState -> state = ((CompletableFuture<GameState>) gameState).join());
-        initialTime = System.currentTimeMillis();
         return this;
     }
 
     @Override
     public void askQuestion(SynchronousPlayer player, String message) {
         Optional.of(player)
-                .filter(timer -> isTimeOut(initialTime, WAITING_QUESTION_TIMEOUT))
+                .filter(timer -> isTimeOut(gameData.getInitialTime(), WAITING_QUESTION_TIMEOUT))
                 .or(() -> {
                     gameData.updatePlayerState(player.getId(), PlayerState.LOSER);
                     throw new GameException(TIME_OVER);
@@ -161,7 +159,6 @@ public class PersistentGame implements SynchronousGame {
                         .state(PlayerState.ASKING)
                         .message(message)
                         .build()));
-        initialTime = System.currentTimeMillis();
     }
 
     @Override
@@ -170,7 +167,7 @@ public class PersistentGame implements SynchronousGame {
         var playerId = player.getId();
         try {
             Optional.of(player)
-                    .filter(timer -> isTimeOut(initialTime, WAITING_ANSWER_TIMEOUT))
+                    .filter(timer -> isTimeOut(gameData.getInitialTime(), WAITING_ANSWER_TIMEOUT))
                     .or(() -> {
                         var counter = gameData.getInactivityCounter(playerId);
                         if (counter == 3) {

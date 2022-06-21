@@ -48,6 +48,7 @@ public class GameLoop implements Game {
     }
 
     private boolean makeTurn() {
+        gameData.setInitialTime();
         var currentGuesser = turn.getGuesser();
         var question = currentGuesser.getCurrentQuestion(WAITING_QUESTION_TIMEOUT, TimeUnit.SECONDS)
                 .handle((message, exception) -> {
@@ -61,6 +62,7 @@ public class GameLoop implements Game {
             gameData.removePlayer(currentGuesser);
             return false;
         }
+        gameData.setInitialTime();
         var answers = turn.getOtherPlayers()
                 .parallelStream()
                 .map(player -> player.getCurrentAnswer(WAITING_ANSWER_TIMEOUT, TimeUnit.SECONDS)

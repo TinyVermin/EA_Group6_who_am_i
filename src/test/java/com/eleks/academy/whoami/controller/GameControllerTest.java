@@ -212,7 +212,7 @@ class GameControllerTest {
     void askQuestion() throws Exception {
         var game = initGame();
         this.mockMvc.perform(
-                        MockMvcRequestBuilders.post("/games/" + game.getId())
+                        MockMvcRequestBuilders.post("/games/" + game.getId() + "/questions")
                                 .header("X-Player", "Pol")
                                 .content("""
                                         {
@@ -225,9 +225,15 @@ class GameControllerTest {
     @Test
     void askQuestionThrowExceptionGame() throws Exception {
         var game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
         this.mockMvc.perform(
-                        MockMvcRequestBuilders.post("/games/" + game.getId())
-                                .header("X-Player", "Pol"))
+                        MockMvcRequestBuilders.post("/games/" + game.getId() + "/questions")
+                                .header("X-Player", "Pol")
+                                .content("""
+                                        {
+                                          "message": "Am i man?"
+                                        }""")
+                                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
     }
 

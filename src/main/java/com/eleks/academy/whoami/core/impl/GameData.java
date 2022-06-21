@@ -2,8 +2,11 @@ package com.eleks.academy.whoami.core.impl;
 
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.model.response.PlayerState;
+import lombok.Getter;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.eleks.academy.whoami.model.response.PlayerState.NOT_READY;
@@ -14,11 +17,17 @@ public class GameData {
     private final Map<String, String> characterMap = new ConcurrentHashMap<>();
     private final Map<String, PlayerState> playersState = new ConcurrentHashMap<>();
     private final Map<String, Integer> inactivityCounter = new ConcurrentHashMap<>();
+    @Getter
+    private long initialTime;
 
     public void addPlayer(SynchronousPlayer player) {
         this.players.add(player);
         this.playersState.put(player.getId(), NOT_READY);
         this.inactivityCounter.put(player.getId(), 0);
+    }
+
+    public void setInitialTime() {
+        this.initialTime = System.currentTimeMillis();
     }
 
     public void removePlayer(SynchronousPlayer player) {
