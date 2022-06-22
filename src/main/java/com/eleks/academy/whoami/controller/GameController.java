@@ -1,7 +1,5 @@
 package com.eleks.academy.whoami.controller;
 
-import com.eleks.academy.whoami.core.SynchronousGame;
-import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.service.GameService;
 import lombok.RequiredArgsConstructor;
@@ -19,18 +17,20 @@ import static com.eleks.academy.whoami.utils.StringUtils.Headers.PLAYER;
 @RequiredArgsConstructor
 public class GameController {
 
-    private final GameService gameService;
+  private final GameService gameService;
 
   @GetMapping("/quick-game")
-    public ResponseEntity<GameDetails> quickGame(@RequestHeader(PLAYER) String player){
-     return this.gameService.quickGame(player)
-             .map(ResponseEntity::ok)
-             .orElseGet(()->ResponseEntity.badRequest().build());
+  public ResponseEntity<GameDetails> quickGame(@RequestHeader(PLAYER) String player) {
+    return this.gameService.quickGame(player)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
   @GetMapping("/{id}/leave-game")
-    public ResponseEntity<GameDetails> leaveGame(@RequestHeader(PLAYER) SynchronousPlayer player, @PathVariable ("id") String id){
-     return (ResponseEntity<GameDetails>) this.gameService.leaveGame(player, id);
+  public ResponseEntity<GameDetails> leaveGame(@RequestHeader(PLAYER) String player, @PathVariable("id") String id) {
+    return this.gameService.leaveGame(player, id)
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
 }

@@ -1,6 +1,5 @@
 package com.eleks.academy.whoami.controller;
 
-import com.eleks.academy.whoami.core.Game;
 import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
@@ -82,14 +81,11 @@ class GameControllerTest {
         gameRepository.save(game);
         game.enrollToGame(new PersistentPlayer("Sam"));
         this.mockMvc.perform(
-                        MockMvcRequestBuilders.get("/games/" + game.getId() + "/leave-game")
-                                .header("X-Player", "Pol")
-                )
+                MockMvcRequestBuilders.get("/games/" + game.getId() + "/leave-game")
+                        .header("X-Player", "Pol"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
                 .andExpect(jsonPath("$.status").value(GameState.GAME_FINISHED.toString()))
                 .andExpect(jsonPath("$.playersInGame").value(0));
-        
-        
     }
 }
