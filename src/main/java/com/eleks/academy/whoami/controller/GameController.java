@@ -4,6 +4,7 @@ package com.eleks.academy.whoami.controller;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.model.request.CharacterSuggestion;
 import com.eleks.academy.whoami.model.request.Message;
+import com.eleks.academy.whoami.model.request.NewGameRequest;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.model.response.GameLight;
 import com.eleks.academy.whoami.service.GameService;
@@ -35,7 +36,7 @@ public class GameController {
     }
 
     @PostMapping
-    public ResponseEntity<GameDetails> createGame(@RequestHeader(PLAYER) String player) {
+    public ResponseEntity<GameDetails> createGame(@RequestHeader(PLAYER) String player, @Valid @RequestBody NewGameRequest gameRequest) {
         return this.gameService.createGame(player)
                 .map(gameDetails -> ResponseEntity.status(HttpStatus.CREATED).body(gameDetails))
                 .orElseGet(() -> ResponseEntity.badRequest().build());

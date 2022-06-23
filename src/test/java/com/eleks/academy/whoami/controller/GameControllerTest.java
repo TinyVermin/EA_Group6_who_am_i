@@ -82,6 +82,11 @@ class GameControllerTest {
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games")
                                 .header("X-Player", "player")
+                                .content("""
+                                        {
+                                          "maxPlayers": "4"
+                                        }""")
+                                .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value(GameState.WAITING_FOR_PLAYER.toString()))
