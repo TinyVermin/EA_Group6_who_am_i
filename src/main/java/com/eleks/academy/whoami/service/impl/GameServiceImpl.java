@@ -3,13 +3,13 @@ package com.eleks.academy.whoami.service.impl;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
+import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.repository.GameRepository;
 import com.eleks.academy.whoami.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.IdGenerator;
 import org.springframework.web.server.ResponseStatusException;
@@ -44,17 +44,14 @@ public class GameServiceImpl implements GameService {
         var gameDetails = GameDetails.of(synchronousGame);
         return Optional.of(gameDetails);
     }
-
-
     
     @Override
-    public SynchronousGame leaveGame(SynchronousPlayer player, String id) {   
-        return this.gameRepository.findById(id).filter(SynchronousGame::isAvailable)
-        .map(game -> game.leaveGame(player))
-        .orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Player has left game")
-        );
+    public Optional<GameDetails> leaveGame(String player, String id) {
+        var game = this.gameRepository.findById(id);
 
+        if (game.isPresent()) {
+            return Optional.of(GameDetails.of(game.get().leaveGame(player)));
+        } else
+            throw new GameException("The game " + id + " not found");
     }
-
 }

@@ -4,8 +4,6 @@ import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.exception.GameException;
-import com.eleks.academy.whoami.model.response.GameDetails;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.util.IdGenerator;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,9 +13,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Stream;
 
-public class PersistentGame implements  SynchronousGame {
+public class PersistentGame implements SynchronousGame {
 
     private final Lock turnLock = new ReentrantLock();
     private final String id;
@@ -50,20 +47,22 @@ public class PersistentGame implements  SynchronousGame {
         turnLock.lock();
         try {
             players.stream()
-                    .filter(f->f.getName().equals(player.getName()))
+                    .filter(f -> f.getName().equals(player.getName()))
                     .findFirst()
-                    .ifPresent(m-> {throw new GameException("Player already exist");});
-            if(players.size() < this.maxPlayers ) {
+                    .ifPresent(m -> {
+                        throw new GameException("Player already exist");
+                    });
+            if (players.size() < this.maxPlayers) {
                 players.add(player);
                 if (players.size() == maxPlayers) {
                     state = GameState.SUGGESTING_CHARACTER;
                 }
                 return this;
             }
-        }finally {
+        } finally {
             turnLock.unlock();
         }
-        throw  new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot enroll to a game");
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cannot enroll to a game");
     }
 
     @Override
@@ -82,17 +81,23 @@ public class PersistentGame implements  SynchronousGame {
     }
 
     @Override
-    public SynchronousGame leaveGame(SynchronousPlayer player) {
-        if(isAvailable()|| state == GameState.SUGGESTING_CHARACTER) {
-            players.removeIf(p -> p.getName().equals(player.getName()));
-        }   
-           return this;
+    public SynchronousGame leaveGame(String player) {
+        turnLock.lock();
+        try {
+            if (isPreparingStage()) {
+                players.clear();
+                state = GameState.GAME_FINISHED;
+                return this;
+            } else {
+                players.removeIf(p -> p.getName().equals(player));
+                return this;
+            }
+        } finally {
+            turnLock.unlock();
+        }
     }
 
-    @Override
-    public boolean isFinished() {
-        return state == GameState.GAME_FINISHED;
+    private boolean isPreparingStage() {
+        return state == GameState.WAITING_FOR_PLAYER || state == GameState.SUGGESTING_CHARACTER;
     }
-
-
 }

@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-WhoAmIApplication<who-am-i>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.eleks.academy.whoami.WhoAmIApplication",
+            "projectName": "who-am-i",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
