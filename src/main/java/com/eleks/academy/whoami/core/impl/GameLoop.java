@@ -18,11 +18,11 @@ import static com.eleks.academy.whoami.model.response.PlayerState.*;
 public class GameLoop implements Game {
 
     private final Turn turn;
-    private final GameData gameData;
+    private final GameDataImpl gameData;
     public static final String MISSING_QUESTION = "";
 
 
-    public GameLoop(GameData gameData) {
+    public GameLoop(GameDataImpl gameData) {
         this.gameData = gameData;
         turn = new TurnImpl(gameData.allPlayers());
     }
@@ -37,14 +37,14 @@ public class GameLoop implements Game {
                 turnResult = this.makeTurn();
             }
             turn.changeTurn();
-            gameData.updateAllPlayersState(turn.getGuesser().getId());
+            gameData.markAnsweringStateExceptCurrentTurnPlayer(turn.getGuesser().getId());
             status = !this.isFinished();
         }
         return CompletableFuture.completedFuture(GameState.FINISHED);
     }
 
     private boolean isFinished() {
-        return gameData.countPlayers() < 2;
+        return gameData.allPlayers().size() < 2;
     }
 
     private boolean makeTurn() {
