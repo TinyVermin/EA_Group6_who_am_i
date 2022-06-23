@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.eleks.academy.whoami.model.response.PlayerState.ANSWERING;
-import static com.eleks.academy.whoami.model.response.PlayerState.NOT_READY;
+import static com.eleks.academy.whoami.model.response.PlayerState.*;
 
 public class GameDataImpl implements GameData {
 
@@ -22,6 +21,7 @@ public class GameDataImpl implements GameData {
     @Getter
     private long initialTime;
 
+    @Override
     public void addPlayer(SynchronousPlayer player) {
         this.players.add(player);
         this.playersState.put(player.getId(), NOT_READY);
@@ -105,8 +105,10 @@ public class GameDataImpl implements GameData {
 
     @Override
     public void markAnsweringStateExceptCurrentTurnPlayer(String currentTurnPlayerId) {
-        updatePlayerState(currentTurnPlayerId, PlayerState.ASKING);
-        allPlayers().forEach(player -> updatePlayerState(player.getId(), ANSWERING));
+        updatePlayerState(currentTurnPlayerId, ASKING);
+        allPlayers().stream()
+                .filter(player -> !player.getId().equals(currentTurnPlayerId))
+                .forEach(player -> updatePlayerState(player.getId(), ANSWERING));
     }
 
     @Override

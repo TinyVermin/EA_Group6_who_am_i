@@ -167,6 +167,9 @@ class GameControllerTest {
     @Test
     void renamePlayer() throws Exception {
         var game = new PersistentGame("Player", 4, uuidGenerator);
+        game.enrollToGame(new PersistentPlayer("Sam", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Jack", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Kat", uuidGenerator.generateId().toString()));
         gameRepository.save(game);
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId() + "/players/name")
@@ -250,7 +253,7 @@ class GameControllerTest {
         game.askQuestion(player, "Am i man?");
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId() + "/answer")
-                                .header("X-Player", "Pol")
+                                .header("X-Player", "Sam")
                                 .content("""
                                         {
                                           "message": "YES"

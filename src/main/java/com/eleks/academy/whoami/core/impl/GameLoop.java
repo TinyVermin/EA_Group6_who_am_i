@@ -1,6 +1,7 @@
 package com.eleks.academy.whoami.core.impl;
 
 import com.eleks.academy.whoami.core.Game;
+import com.eleks.academy.whoami.core.GameData;
 import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.Turn;
 import com.eleks.academy.whoami.model.request.PlayersAnswer;
@@ -18,11 +19,11 @@ import static com.eleks.academy.whoami.model.response.PlayerState.*;
 public class GameLoop implements Game {
 
     private final Turn turn;
-    private final GameDataImpl gameData;
+    private final GameData gameData;
     public static final String MISSING_QUESTION = "";
 
 
-    public GameLoop(GameDataImpl gameData) {
+    public GameLoop(GameData gameData) {
         this.gameData = gameData;
         turn = new TurnImpl(gameData.allPlayers());
     }

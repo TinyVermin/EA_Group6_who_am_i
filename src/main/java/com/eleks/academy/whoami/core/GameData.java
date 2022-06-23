@@ -6,7 +6,11 @@ import java.util.List;
 
 public interface GameData {
 
+    void addPlayer(SynchronousPlayer player);
+
     void setInitialTime();
+
+    long getInitialTime();
 
     void removePlayer(SynchronousPlayer player);
 

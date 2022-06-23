@@ -146,10 +146,6 @@ public class GameServiceImpl implements GameService {
         return this.gameRepository.findById(id)
                 .or(() -> {
                     throw new GameException(GAME_NOT_FOUND);
-                })
-                .filter(game -> game.getStatus().equals(GameState.PROCESSING_QUESTION))
-                .or(() -> {
-                    throw new GameException(NOT_AVAILABLE);
                 });
     }
 

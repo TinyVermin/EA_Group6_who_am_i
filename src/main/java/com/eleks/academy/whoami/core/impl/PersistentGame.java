@@ -1,9 +1,6 @@
 package com.eleks.academy.whoami.core.impl;
 
-import com.eleks.academy.whoami.core.Game;
-import com.eleks.academy.whoami.core.GameState;
-import com.eleks.academy.whoami.core.SynchronousGame;
-import com.eleks.academy.whoami.core.SynchronousPlayer;
+import com.eleks.academy.whoami.core.*;
 import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.model.request.PlayersAnswer;
 import com.eleks.academy.whoami.model.response.PlayerState;
@@ -25,7 +22,7 @@ public class PersistentGame implements SynchronousGame {
     private final Lock turnLock = new ReentrantLock();
     private final String id;
     private final Integer maxPlayers;
-    private final GameDataImpl gameData;
+    private final GameData gameData;
     public static final long SUGGESTING_CHARACTER_TIMEOUT = 120;
     public static final long WAITING_QUESTION_TIMEOUT = 60;
     public static final long WAITING_ANSWER_TIMEOUT = 20;
