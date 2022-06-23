@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.eleks.academy.whoami.model.response.PlayerState.NOT_READY;
+import static com.eleks.academy.whoami.model.response.PlayerState.*;
 
 public class GameData {
 
@@ -94,10 +94,11 @@ public class GameData {
     }
 
     public void updateAllPlayersState(String currentTurnPlayerId) {
-        this.playersState.put(currentTurnPlayerId, PlayerState.ASKING);
-        this.playersState.keySet().stream()
-                .filter(key -> !key.equals(currentTurnPlayerId))
-                .forEach(key -> this.playersState.put(key, PlayerState.ANSWERING));
+        this.playersState.put(currentTurnPlayerId, ASKING);
+        allPlayers()
+                .stream()
+                .filter(player -> !player.getId().equals(currentTurnPlayerId))
+                .forEach(player -> this.playersState.put(player.getId(), ANSWERING));
     }
 
     public PlayerState getPlayerState(String id) {

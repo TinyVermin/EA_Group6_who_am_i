@@ -76,9 +76,8 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Optional<GameDetails> findByIdAndPlayer(String id, String player) {
+    public Optional<GameDetails> findById(String id) {
         return this.findGame(id)
-                .filter(game -> game.findPlayer(player).isPresent())
                 .map(GameDetails::of);
     }
 

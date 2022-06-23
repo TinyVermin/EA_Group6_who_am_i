@@ -65,7 +65,7 @@ public class GameController {
     @GetMapping("/{id}")
     public ResponseEntity<GameDetails> findById(@PathVariable("id") String id,
                                                 @RequestHeader(PLAYER) String player) {
-        return this.gameService.findByIdAndPlayer(id, player)
+        return this.gameService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

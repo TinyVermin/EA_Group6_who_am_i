@@ -19,7 +19,7 @@ public interface GameService {
 
     void suggestCharacter(String id, String player, String character);
 
-    Optional<GameDetails> findByIdAndPlayer(String id, String player);
+    Optional<GameDetails> findById(String id);
 
     Optional<SynchronousPlayer> renamePlayer(String id, String oldName, String newName);
 

@@ -158,10 +158,7 @@ public class PersistentGame implements SynchronousGame {
                     gameData.updatePlayerState(player.getId(), LOSER);
                     throw new GameException(TIME_OVER);
                 })
-                .ifPresent(synchronousPlayer -> synchronousPlayer.setAnswer(Answer.builder()
-                        .state(ASKING)
-                        .message(message)
-                        .build()));
+                .ifPresent(synchronousPlayer -> synchronousPlayer.setAnswer(message, false));
     }
 
     @Override
@@ -181,10 +178,7 @@ public class PersistentGame implements SynchronousGame {
                         return Optional.of(player);
                     })
                     .ifPresent(synchronousPlayer -> {
-                        synchronousPlayer.setAnswer(Answer.builder()
-                                .state(ANSWERING)
-                                .message(answer.toString())
-                                .build());
+                        synchronousPlayer.setAnswer(answer.toString(), false);
                         gameData.clearInactivityCounter(playerId);
                     });
         } finally {

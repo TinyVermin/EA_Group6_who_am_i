@@ -80,7 +80,7 @@ public class GameLoop implements Game {
 
         boolean win = positiveAnswer > negativeAnswer;
         if (win) {
-            if (currentGuesser.getState().equals(GUESSING)) {
+            if (currentGuesser.isGuessing()) {
                 gameData.updatePlayerState(currentGuesser.getId(), WINNER);
                 gameData.removePlayer(currentGuesser);
             }
