@@ -8,6 +8,7 @@ import lombok.Getter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.eleks.academy.whoami.model.response.PlayerState.*;
@@ -36,6 +37,11 @@ public class GameDataImpl implements GameData {
     @Override
     public void removePlayer(SynchronousPlayer player) {
         this.players.remove(player);
+    }
+
+    @Override
+    public void removeAllPlayers() {
+        this.players.clear();
     }
 
     @Override

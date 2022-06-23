@@ -142,6 +142,16 @@ public class GameServiceImpl implements GameService {
         }
     }
 
+    @Override
+    public Optional<GameDetails> leaveGame(String player, String id) {
+        var game = this.gameRepository.findById(id);
+
+        if (game.isPresent()) {
+            return Optional.of(GameDetails.of(game.get().leaveGame(player)));
+        } else
+            throw new GameException("The game " + id + " not found");
+    }
+
     private Optional<SynchronousGame> findGame(String id) {
         return this.gameRepository.findById(id)
                 .or(() -> {

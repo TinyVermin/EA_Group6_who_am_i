@@ -38,4 +38,6 @@ public interface GameData {
 
     void mixCharacters();
 
+    void removeAllPlayers();
+
 }
