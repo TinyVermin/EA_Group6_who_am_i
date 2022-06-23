@@ -3,6 +3,7 @@ package com.eleks.academy.whoami.service.impl;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
+import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
 import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.repository.GameRepository;
@@ -45,10 +46,12 @@ public class GameServiceImpl implements GameService {
     }
     
     @Override
-    public Optional<GameDetails> leaveGame(String player, String id) {   
-        var game = this.gameRepository.findById(id);       
-        return Optional.of(GameDetails.of(game.get().leaveGame(player)));
+    public Optional<GameDetails> leaveGame(String player, String id) {
+        var game = this.gameRepository.findById(id);
 
+        if (game.isPresent()) {
+            return Optional.of(GameDetails.of(game.get().leaveGame(player)));
+        } else
+            throw new GameException("The game " + id + " not found");
     }
-
 }
