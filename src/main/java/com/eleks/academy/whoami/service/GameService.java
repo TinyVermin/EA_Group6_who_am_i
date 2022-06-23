@@ -26,4 +26,6 @@ public interface GameService {
     Optional<GameDetails> startGame(String id, String player);
 
     void askQuestion(String id, String player, String message);
+
+    void answerQuestion(String id, String player, String answer);
 }

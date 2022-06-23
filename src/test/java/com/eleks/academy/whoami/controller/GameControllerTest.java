@@ -2,10 +2,12 @@ package com.eleks.academy.whoami.controller;
 
 import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
+import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
 import com.eleks.academy.whoami.model.response.PlayerState;
 import com.eleks.academy.whoami.repository.GameRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -165,6 +167,9 @@ class GameControllerTest {
     @Test
     void renamePlayer() throws Exception {
         var game = new PersistentGame("Player", 4, uuidGenerator);
+        game.enrollToGame(new PersistentPlayer("Sam", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Jack", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Kat", uuidGenerator.generateId().toString()));
         gameRepository.save(game);
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId() + "/players/name")
@@ -195,7 +200,6 @@ class GameControllerTest {
                         MockMvcRequestBuilders.post("/games/" + game.getId())
                                 .header("X-Player", "Pol"))
                 .andExpect(status().isOk());
-
     }
 
     @Test
@@ -205,12 +209,14 @@ class GameControllerTest {
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId())
                                 .header("X-Player", "Pol"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
     }
 
     @Test
     void askQuestion() throws Exception {
         var game = initGame();
+        game.start();
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId() + "/questions")
                                 .header("X-Player", "Pol")
@@ -234,7 +240,44 @@ class GameControllerTest {
                                           "message": "Am i man?"
                                         }""")
                                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+
+                .andExpect(status().isBadRequest())
+                .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
+    }
+
+    @Test
+    void answerQuestion() throws Exception {
+        var game = initGame();
+        var player = game.findPlayer("Pol").get();
+        game.start();
+        game.askQuestion(player, "Am i man?");
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games/" + game.getId() + "/answer")
+                                .header("X-Player", "Sam")
+                                .content("""
+                                        {
+                                          "message": "YES"
+                                        }""")
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void answerQuestionWithNotCorrectAnswerThrowException() throws Exception {
+        var game = initGame();
+        var player = game.findPlayer("Pol").get();
+        game.start();
+        game.askQuestion(player, "Am i man?");
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.post("/games/" + game.getId() + "/answer")
+                                .header("X-Player", "Pol")
+                                .content("""
+                                        {
+                                          "message": "YE"
+                                        }""")
+                                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
     }
 
     private SynchronousGame initGame() {

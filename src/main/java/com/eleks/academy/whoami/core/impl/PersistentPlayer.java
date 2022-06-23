@@ -2,17 +2,27 @@ package com.eleks.academy.whoami.core.impl;
 
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.exception.TimeoutException;
+import com.eleks.academy.whoami.model.request.PlayersAnswer;
+import com.eleks.academy.whoami.model.response.PlayerState;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
 
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.*;
 
+import static com.eleks.academy.whoami.model.response.PlayerState.ANSWERING;
+import static com.eleks.academy.whoami.model.response.PlayerState.ASKING;
+
 public class PersistentPlayer implements SynchronousPlayer {
     @JsonIgnore
     private final String id;
     private String name;
+    @Getter
     private String character;
+    @JsonIgnore
+    private PlayerState state;
+    @JsonIgnore
     private final Queue<String> answerQueue = new ConcurrentLinkedQueue<>();
 
     public PersistentPlayer(String name, String id) {
@@ -42,14 +52,15 @@ public class PersistentPlayer implements SynchronousPlayer {
     }
 
     @Override
-    public String getCharacter() {
-        return this.character;
+    public PlayerState getState() {
+        return this.state;
     }
 
     @Override
     public void setAnswer(Answer answer) {
         switch (answer.getState()) {
             case ASKING -> setCurrentQuestion(answer.getMessage());
+            case ANSWERING -> setCurrentAnswer(answer.getMessage());
         }
     }
 
@@ -58,6 +69,16 @@ public class PersistentPlayer implements SynchronousPlayer {
     public CompletableFuture<String> getCurrentQuestion(long limit, TimeUnit unit) {
         return CompletableFuture
                 .supplyAsync(() -> waitAnswer(limit, unit));
+    }
+
+    @Override
+    @JsonIgnore
+    public CompletableFuture<PlayersAnswer> getCurrentAnswer(long limit, TimeUnit unit) {
+        return CompletableFuture
+                .supplyAsync(() -> {
+                    var answer = waitAnswer(limit, unit);
+                    return PlayersAnswer.valueOf(answer);
+                });
     }
 
     private String waitAnswer(long limit, TimeUnit unit) throws TimeoutException {
@@ -71,7 +92,12 @@ public class PersistentPlayer implements SynchronousPlayer {
     }
 
     private void setCurrentQuestion(String currentQuestion) {
+        state = ASKING;
         answerQueue.add(currentQuestion);
     }
 
+    private void setCurrentAnswer(String currentAnswer) {
+        state = ANSWERING;
+        answerQueue.add(currentAnswer);
+    }
 }

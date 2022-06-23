@@ -1,5 +1,6 @@
 package com.eleks.academy.whoami.core;
 
+import com.eleks.academy.whoami.model.request.PlayersAnswer;
 import com.eleks.academy.whoami.model.response.PlayersWithState;
 
 import java.util.List;
@@ -26,4 +27,6 @@ public interface SynchronousGame  {
     SynchronousGame start();
 
     void askQuestion(SynchronousPlayer player, String message);
+
+    void answerQuestion(SynchronousPlayer player, PlayersAnswer answer);
 }
