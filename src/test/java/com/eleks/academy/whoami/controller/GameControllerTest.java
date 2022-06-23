@@ -237,6 +237,7 @@ class GameControllerTest {
                                           "message": "Am i man?"
                                         }""")
                                 .contentType(MediaType.APPLICATION_JSON))
+
                 .andExpect(status().isBadRequest())
                 .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
     }

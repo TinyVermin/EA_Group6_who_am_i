@@ -27,7 +27,8 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final IdGenerator uuidGenerator;
     public static final String GAME_NOT_FOUND = "Game is not found";
-    private static final String NOT_AVAILABLE = "Not available";
+    public static final String NOT_AVAILABLE = "Not available";
+
 
     @Override
     public Optional<SynchronousPlayer> enrollToGame(String id, String player) {
@@ -145,6 +146,10 @@ public class GameServiceImpl implements GameService {
         return this.gameRepository.findById(id)
                 .or(() -> {
                     throw new GameException(GAME_NOT_FOUND);
+                })
+                .filter(game -> game.getStatus().equals(GameState.PROCESSING_QUESTION))
+                .or(() -> {
+                    throw new GameException(NOT_AVAILABLE);
                 });
     }
 
