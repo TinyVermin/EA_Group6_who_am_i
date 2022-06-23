@@ -285,6 +285,19 @@ class GameControllerTest {
                 .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
     }
 
+    @Test
+    void wrongGameId_leaveGame() throws Exception {
+        var game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
+        game.enrollToGame(new PersistentPlayer("Sam",uuidGenerator.generateId().toString()));
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.get("/games/" + game.getId() + "/leave-game")
+                                .header("X-Player", "Pol"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("00000000-0000-0000-0000-000000000001"))
+                .andExpect(jsonPath("$.status").value(GameState.FINISHED.toString()));
+    }
+
     private SynchronousGame initGame() {
         var game = new PersistentGame("Pol", 4, uuidGenerator);
         gameRepository.save(game);
