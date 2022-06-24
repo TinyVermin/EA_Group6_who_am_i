@@ -29,4 +29,6 @@ public interface SynchronousGame  {
     void askQuestion(SynchronousPlayer player, String message);
 
     void answerQuestion(SynchronousPlayer player, PlayersAnswer answer);
+
+    History getHistory();
 }
