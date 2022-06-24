@@ -7,6 +7,7 @@ import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.Game;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.GameState;
+
 import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.model.request.PlayersAnswer;
 import com.eleks.academy.whoami.model.response.PlayerState;
@@ -57,6 +58,23 @@ public class PersistentGame implements SynchronousGame {
     @Override
     public String getId() {
         return this.id;
+    }
+
+    @Override
+    public SynchronousGame leaveGame(String player) {
+        turnLock.lock();
+        try {
+            if (isPreparingStage()) {
+               gameData.removeAllPlayers();
+                state = GameState.FINISHED;
+                return this;
+            } else {
+               gameData.allPlayers().removeIf(p -> p.getName().equals(player));
+                return this;
+            }
+        } finally {
+            turnLock.unlock();
+        }
     }
 
     @Override
@@ -189,6 +207,7 @@ public class PersistentGame implements SynchronousGame {
         }
     }
 
+
     @Override
     public History getHistory() {
         return gameData.getHistory();
@@ -205,5 +224,9 @@ public class PersistentGame implements SynchronousGame {
 
     private boolean isTimeOut(long compareTime, long duration) {
         return (System.currentTimeMillis() - compareTime) <= TimeUnit.SECONDS.toMillis(duration);
+    }
+
+    private boolean isPreparingStage() {
+        return state == GameState.WAITING_FOR_PLAYER || state == GameState.SUGGESTING_CHARACTER;
     }
 }

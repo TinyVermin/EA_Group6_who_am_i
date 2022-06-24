@@ -31,4 +31,7 @@ public interface SynchronousGame  {
     void answerQuestion(SynchronousPlayer player, PlayersAnswer answer);
 
     History getHistory();
+
+    SynchronousGame leaveGame(String player);
+
 }

@@ -85,6 +85,11 @@ class GameControllerTest {
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games")
                                 .header("X-Player", "player")
+                                .content("""
+                                        {
+                                          "maxPlayers": "4"
+                                        }""")
+                                .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value(GameState.WAITING_FOR_PLAYER.toString()))
@@ -170,6 +175,9 @@ class GameControllerTest {
     @Test
     void renamePlayer() throws Exception {
         var game = new PersistentGame("Player", 4, uuidGenerator);
+        game.enrollToGame(new PersistentPlayer("Sam", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Jack", uuidGenerator.generateId().toString()));
+        game.enrollToGame(new PersistentPlayer("Kat", uuidGenerator.generateId().toString()));
         gameRepository.save(game);
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId() + "/players/name")
@@ -240,6 +248,7 @@ class GameControllerTest {
                                           "message": "Am i man?"
                                         }""")
                                 .contentType(MediaType.APPLICATION_JSON))
+
                 .andExpect(status().isBadRequest())
                 .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
     }
@@ -300,6 +309,18 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.history.entries[0].answers[0].answer").value("NO"))
                 .andExpect(jsonPath("$.history.entries[0].answers[1].answer").value("NO"))
                 .andExpect(jsonPath("$.history.entries[0].answers[2].answer").value("NO"));
+    }
+    @Test
+    void wrongGameId_leaveGame() throws Exception {
+        var game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
+        game.enrollToGame(new PersistentPlayer("Sam",uuidGenerator.generateId().toString()));
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.get("/games/" + game.getId() + "/leave-game")
+                                .header("X-Player", "Pol"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("00000000-0000-0000-0000-000000000001"))
+                .andExpect(jsonPath("$.status").value(GameState.FINISHED.toString()));
     }
 
     private SynchronousGame initGame() {

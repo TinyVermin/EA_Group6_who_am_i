@@ -105,4 +105,10 @@ public class GameController {
                                @RequestBody Message message) {
         this.gameService.answerQuestion(id, player, message.getMessage());
     }
+    @GetMapping("/{id}/leave-game")
+    public ResponseEntity<GameDetails> leaveGame(@RequestHeader(PLAYER) String player, @PathVariable("id") String id) {
+        return this.gameService.leaveGame(player, id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.badRequest().build());
+    }
 }
