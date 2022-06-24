@@ -1,10 +1,13 @@
 package com.eleks.academy.whoami.controller;
 
 import com.eleks.academy.whoami.core.GameState;
+import com.eleks.academy.whoami.core.History;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.core.impl.PersistentGame;
 import com.eleks.academy.whoami.core.impl.PersistentPlayer;
+import com.eleks.academy.whoami.model.request.PlayersAnswer;
+import com.eleks.academy.whoami.model.response.GameDetails;
 import com.eleks.academy.whoami.model.response.PlayerState;
 import com.eleks.academy.whoami.repository.GameRepository;
 import org.junit.jupiter.api.Assertions;
@@ -249,7 +252,7 @@ class GameControllerTest {
         game.askQuestion(player, "Am i man?");
         this.mockMvc.perform(
                         MockMvcRequestBuilders.post("/games/" + game.getId() + "/answer")
-                                .header("X-Player", "Pol")
+                                .header("X-Player", "Sam")
                                 .content("""
                                         {
                                           "message": "YES"
@@ -274,6 +277,29 @@ class GameControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
+    }
+
+    @Test
+    void createHistory() throws Exception {
+        var game = initGame();
+        var players = game.getPlayersInGame();
+        game.start();
+        game.askQuestion(players.get(0), "Am I man?");
+        game.answerQuestion(players.get(1), PlayersAnswer.NO);
+        game.answerQuestion(players.get(2), PlayersAnswer.NO);
+        game.answerQuestion(players.get(3), PlayersAnswer.NO);
+
+        this.mockMvc.perform(
+                        MockMvcRequestBuilders.get("/games/" + game.getId())
+                                .header("X-Player", "Pol"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(GameState.PROCESSING_QUESTION.toString()))
+                .andExpect(jsonPath("$.history.entries[0].id").value(1))
+                .andExpect(jsonPath("$.history.entries[0].playerName").value("Pol"))
+                .andExpect(jsonPath("$.history.entries[0].playerQuestion").value("Am I man?"))
+                .andExpect(jsonPath("$.history.entries[0].answers[0].answer").value("NO"))
+                .andExpect(jsonPath("$.history.entries[0].answers[1].answer").value("NO"))
+                .andExpect(jsonPath("$.history.entries[0].answers[2].answer").value("NO"));
     }
 
     private SynchronousGame initGame() {
