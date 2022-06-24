@@ -27,7 +27,8 @@ public class GameServiceImpl implements GameService {
     private final GameRepository gameRepository;
     private final IdGenerator uuidGenerator;
     public static final String GAME_NOT_FOUND = "Game is not found";
-    private static final String NOT_AVAILABLE = "Not available";
+    public static final String NOT_AVAILABLE = "Not available";
+
 
     @Override
     public Optional<SynchronousPlayer> enrollToGame(String id, String player) {
@@ -53,8 +54,8 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Optional<GameDetails> createGame(String player) {
-        var game = this.gameRepository.save(new PersistentGame(player, 4, uuidGenerator));
+    public Optional<GameDetails> createGame(String player, Integer maxPlayer) {
+        var game = this.gameRepository.save(new PersistentGame(player, maxPlayer, uuidGenerator));
         return Optional.of(GameDetails.of(game));
     }
 

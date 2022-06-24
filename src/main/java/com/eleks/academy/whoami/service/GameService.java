@@ -13,7 +13,7 @@ public interface GameService {
 
     Optional<GameDetails> quickGame(String player);
 
-    Optional<GameDetails> createGame(String player);
+    Optional<GameDetails> createGame(String player, Integer maxPlayer);
 
     List<GameLight> findAvailableGames(String player);
 
