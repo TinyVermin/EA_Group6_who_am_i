@@ -54,23 +54,6 @@ public class PersistentGame implements SynchronousGame {
     }
 
     @Override
-    public SynchronousGame leaveGame(String player) {
-        turnLock.lock();
-        try {
-            if (isPreparingStage()) {
-               gameData.removeAllPlayers();
-                state = GameState.FINISHED;
-                return this;
-            } else {
-               gameData.allPlayers().removeIf(p -> p.getName().equals(player));
-                return this;
-            }
-        } finally {
-            turnLock.unlock();
-        }
-    }
-
-    @Override
     public SynchronousGame enrollToGame(SynchronousPlayer player) {
         turnLock.lock();
         try {
@@ -239,5 +222,4 @@ public class PersistentGame implements SynchronousGame {
     private boolean isPreparingStage() {
         return state == GameState.WAITING_FOR_PLAYER || state == GameState.SUGGESTING_CHARACTER;
     }
-
 }
