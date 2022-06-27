@@ -31,4 +31,5 @@ public interface SynchronousGame  {
     void answerQuestion(SynchronousPlayer player, PlayersAnswer answer);
 
     SynchronousGame leaveGame(String player);
+
 }
