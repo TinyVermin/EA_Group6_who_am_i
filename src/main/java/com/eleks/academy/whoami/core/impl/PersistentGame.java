@@ -201,14 +201,16 @@ public class PersistentGame implements SynchronousGame {
 
     private boolean isTimeOut(long compareTime, long duration) {
         return (System.currentTimeMillis() - compareTime) <= TimeUnit.SECONDS.toMillis(duration);
+    }
 
     @Override
     public SynchronousGame leaveGame(String player) {
         turnLock.lock();
+        List<SynchronousPlayer> players = getPlayersInGame();
         try {
             if (isPreparingStage()) {
                 players.clear();
-                state = GameState.GAME_FINISHED;
+                state = GameState.FINISHED;
                 return this;
             } else {
                 players.removeIf(p -> p.getName().equals(player));

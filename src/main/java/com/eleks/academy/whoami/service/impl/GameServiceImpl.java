@@ -51,11 +51,7 @@ public class GameServiceImpl implements GameService {
 
         var gameDetails = GameDetails.of(synchronousGame);
         return Optional.of(gameDetails);
-    }
-    
-    @Override
-    public Optional<GameDetails> leaveGame(String player, String id) {
-        var game = this.gameRepository.findById(id);
+    }    
 
     @Override
     public Optional<GameDetails> createGame(String player) {
@@ -170,5 +166,4 @@ public class GameServiceImpl implements GameService {
                     throw new GameException("Player '" + player + "' is not found");
                 });
     }
-}
 }
