@@ -1,5 +1,7 @@
 package com.eleks.academy.whoami.core;
 
-public interface Game {
+import java.util.concurrent.Future;
 
+public interface Game {
+     Future<GameState> play();
 }

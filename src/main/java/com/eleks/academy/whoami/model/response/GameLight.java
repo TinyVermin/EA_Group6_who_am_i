@@ -1,5 +1,6 @@
 package com.eleks.academy.whoami.model.response;
 
+
 import com.eleks.academy.whoami.core.GameState;
 import com.eleks.academy.whoami.core.SynchronousGame;
 import lombok.AllArgsConstructor;
@@ -7,26 +8,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GameDetails {
+public class GameLight {
 
     private String id;
-
     private GameState status;
+    private String playersInGame;
 
-    private List<PlayersWithState> players;
-
-    public static GameDetails of(SynchronousGame game) {
-        return GameDetails.builder()
+    public static GameLight of(SynchronousGame game) {
+        return GameLight.builder()
                 .id(game.getId())
                 .status(game.getStatus())
-                .players(game.getPlayersInGameWithState())
+                .playersInGame(Integer.toString(game.getPlayersInGame().size()))
                 .build();
     }
-
 }
