@@ -28,4 +28,6 @@ public interface GameService {
     void askQuestion(String id, String player, String message);
 
     void answerQuestion(String id, String player, String answer);
+
+    Optional<GameDetails> leaveGame(String player, String id);
 }

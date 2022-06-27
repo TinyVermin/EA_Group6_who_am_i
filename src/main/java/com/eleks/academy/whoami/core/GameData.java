@@ -1,6 +1,8 @@
 package com.eleks.academy.whoami.core;
 
+
 import com.eleks.academy.whoami.model.request.PlayersAnswer;
+
 import com.eleks.academy.whoami.model.response.PlayerState;
 import com.eleks.academy.whoami.model.response.PlayersWithState;
 
@@ -15,6 +17,7 @@ public interface GameData {
     void savePlayersAnswer(String playerName, PlayersAnswer answer);
 
     void addPlayerAnswersInHistory();
+
 
     void setInitialTime();
 
@@ -49,4 +52,7 @@ public interface GameData {
     void mixCharacters();
 
     History getHistory();
+
+    void removeAllPlayers();
+
 }

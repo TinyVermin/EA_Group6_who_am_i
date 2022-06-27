@@ -1,11 +1,13 @@
 package com.eleks.academy.whoami.core.impl;
 
 import com.eleks.academy.whoami.core.GameData;
+
 import com.eleks.academy.whoami.core.History;
 import com.eleks.academy.whoami.core.Player;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.model.request.PlayersAnswer;
+
 import com.eleks.academy.whoami.model.response.PlayerState;
 import com.eleks.academy.whoami.model.response.PlayersWithState;
 import lombok.Getter;
@@ -17,6 +19,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
+
 import static com.eleks.academy.whoami.model.response.PlayerState.*;
 
 public class GameDataImpl implements GameData {
@@ -27,6 +30,7 @@ public class GameDataImpl implements GameData {
     private final Map<String, Integer> inactivityCounter = new ConcurrentHashMap<>();
     private final Queue<AnsweringPlayer> playersAnswerQueue = new LinkedBlockingQueue<>();
     private final History historyAnswers = new HistoryImpl();
+
     @Getter
     private long initialTime;
 
@@ -66,6 +70,11 @@ public class GameDataImpl implements GameData {
     @Override
     public void removePlayer(SynchronousPlayer player) {
         this.players.remove(player);
+    }
+
+    @Override
+    public void removeAllPlayers() {
+        this.players.clear();
     }
 
     @Override
