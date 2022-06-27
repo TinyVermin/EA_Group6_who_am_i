@@ -1,32 +1,65 @@
 package com.eleks.academy.whoami.core.impl;
 
 import com.eleks.academy.whoami.core.GameData;
+
+import com.eleks.academy.whoami.core.History;
+import com.eleks.academy.whoami.core.Player;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
+import com.eleks.academy.whoami.core.exception.GameException;
+import com.eleks.academy.whoami.model.request.PlayersAnswer;
+
 import com.eleks.academy.whoami.model.response.PlayerState;
+import com.eleks.academy.whoami.model.response.PlayersWithState;
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+
 
 import static com.eleks.academy.whoami.model.response.PlayerState.*;
 
 public class GameDataImpl implements GameData {
 
     private final List<SynchronousPlayer> players = new ArrayList<>();
+    private final List<PlayersWithState> playersWithStates = new ArrayList<>();
     private final Map<String, String> characterMap = new ConcurrentHashMap<>();
-    private final Map<String, PlayerState> playersState = new ConcurrentHashMap<>();
     private final Map<String, Integer> inactivityCounter = new ConcurrentHashMap<>();
+    private final Queue<AnsweringPlayer> playersAnswerQueue = new LinkedBlockingQueue<>();
+    private final History historyAnswers = new HistoryImpl();
+
     @Getter
     private long initialTime;
 
     @Override
     public void addPlayer(SynchronousPlayer player) {
         this.players.add(player);
-        this.playersState.put(player.getId(), NOT_READY);
         this.inactivityCounter.put(player.getId(), 0);
+        this.playersWithStates.add(PlayersWithState
+                .builder()
+                .player(player)
+                .state(NOT_READY)
+                .build());
+    }
+
+    @Override
+    public void savePlayersAnswer(String playerName, PlayersAnswer answer) {
+        this.playersAnswerQueue.add(new AnsweringPlayer(playerName, answer));
+    }
+
+    @Override
+    public void addPlayerQuestionInHistory(String playerName, String question) {
+        this.historyAnswers.addNewEntry(new Entry(playerName, question));
+    }
+
+    @Override
+    public void addPlayerAnswersInHistory() {
+        while (!playersAnswerQueue.isEmpty()) {
+            this.historyAnswers.addAnswerToEntry(playersAnswerQueue.poll());
+        }
     }
 
     @Override
@@ -90,7 +123,10 @@ public class GameDataImpl implements GameData {
 
     @Override
     public void updatePlayerState(String id, PlayerState playerState) {
-        this.playersState.put(id, playerState);
+        playersWithStates.stream()
+                .filter(list -> list.getPlayer().getId().equals(id))
+                .findFirst()
+                .ifPresent(playersWithState -> playersWithState.setState(playerState));
     }
 
     @Override
@@ -110,15 +146,32 @@ public class GameDataImpl implements GameData {
     }
 
     @Override
+    public History getHistory() {
+        return this.historyAnswers;
+    }
+
+    @Override
     public void markAnsweringStateExceptCurrentTurnPlayer(String currentTurnPlayerId) {
         updatePlayerState(currentTurnPlayerId, ASKING);
-        allPlayers().stream()
-                .filter(player -> !player.getId().equals(currentTurnPlayerId))
-                .forEach(player -> updatePlayerState(player.getId(), ANSWERING));
+        this.playersWithStates.stream()
+                .map(PlayersWithState::getPlayer)
+                .map(Player::getId)
+                .filter(id -> !id.equals(currentTurnPlayerId))
+                .forEach(id -> updatePlayerState(id, ANSWERING));
     }
 
     @Override
     public PlayerState getPlayerState(String id) {
-        return this.playersState.get(id);
+        return playersWithStates.stream()
+                .filter(playersWithState -> playersWithState.getPlayer().getId().equals(id))
+                .findFirst()
+                .map(PlayersWithState::getState)
+                .orElseThrow(()->{
+                    throw  new GameException("Player not found");
+                });
+    }
+    @Override
+    public List<PlayersWithState> getPlayersWithState() {
+        return playersWithStates;
     }
 }

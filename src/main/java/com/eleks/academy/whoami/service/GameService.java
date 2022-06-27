@@ -13,13 +13,13 @@ public interface GameService {
 
     Optional<GameDetails> quickGame(String player);
 
-    Optional<GameDetails> createGame(String player);
+    Optional<GameDetails> createGame(String player, Integer maxPlayer);
 
     List<GameLight> findAvailableGames(String player);
 
     void suggestCharacter(String id, String player, String character);
 
-    Optional<GameDetails> findByIdAndPlayer(String id, String player);
+    Optional<GameDetails> findById(String id);
 
     Optional<SynchronousPlayer> renamePlayer(String id, String oldName, String newName);
 

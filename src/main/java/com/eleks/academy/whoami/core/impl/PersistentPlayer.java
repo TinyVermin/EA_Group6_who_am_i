@@ -3,16 +3,12 @@ package com.eleks.academy.whoami.core.impl;
 import com.eleks.academy.whoami.core.SynchronousPlayer;
 import com.eleks.academy.whoami.core.exception.TimeoutException;
 import com.eleks.academy.whoami.model.request.PlayersAnswer;
-import com.eleks.academy.whoami.model.response.PlayerState;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.*;
-
-import static com.eleks.academy.whoami.model.response.PlayerState.ANSWERING;
-import static com.eleks.academy.whoami.model.response.PlayerState.ASKING;
 
 public class PersistentPlayer implements SynchronousPlayer {
     @JsonIgnore
@@ -21,7 +17,7 @@ public class PersistentPlayer implements SynchronousPlayer {
     @Getter
     private String character;
     @JsonIgnore
-    private PlayerState state;
+    private boolean guessing;
     @JsonIgnore
     private final Queue<String> answerQueue = new ConcurrentLinkedQueue<>();
 
@@ -52,16 +48,14 @@ public class PersistentPlayer implements SynchronousPlayer {
     }
 
     @Override
-    public PlayerState getState() {
-        return this.state;
+    public boolean isGuessing() {
+        return this.guessing;
     }
 
     @Override
-    public void setAnswer(Answer answer) {
-        switch (answer.getState()) {
-            case ASKING -> setCurrentQuestion(answer.getMessage());
-            case ANSWERING -> setCurrentAnswer(answer.getMessage());
-        }
+    public void setAnswer(String answer, boolean guessing) {
+        answerQueue.add(answer);
+        this.guessing = guessing;
     }
 
     @Override
@@ -89,15 +83,5 @@ public class PersistentPlayer implements SynchronousPlayer {
             }
         }
         return answerQueue.poll();
-    }
-
-    private void setCurrentQuestion(String currentQuestion) {
-        state = ASKING;
-        answerQueue.add(currentQuestion);
-    }
-
-    private void setCurrentAnswer(String currentAnswer) {
-        state = ANSWERING;
-        answerQueue.add(currentAnswer);
     }
 }

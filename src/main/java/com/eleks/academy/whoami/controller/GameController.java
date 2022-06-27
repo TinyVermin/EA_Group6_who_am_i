@@ -40,8 +40,9 @@ public class GameController {
     }
 
     @PostMapping
-    public ResponseEntity<GameDetails> createGame(@RequestHeader(PLAYER) String player, @Valid @RequestBody NewGameRequest gameRequest) {
-        return this.gameService.createGame(player)
+    public ResponseEntity<GameDetails> createGame(@RequestHeader(PLAYER) String player,
+                                                  @RequestBody NewGameRequest gameRequest) {
+        return this.gameService.createGame(player, gameRequest.getMaxPlayers())
                 .map(gameDetails -> ResponseEntity.status(HttpStatus.CREATED).body(gameDetails))
                 .orElseGet(() -> ResponseEntity.badRequest().build());
     }
@@ -70,7 +71,7 @@ public class GameController {
     @GetMapping("/{id}")
     public ResponseEntity<GameDetails> findById(@PathVariable("id") String id,
                                                 @RequestHeader(PLAYER) String player) {
-        return this.gameService.findByIdAndPlayer(id, player)
+        return this.gameService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
