@@ -34,6 +34,7 @@ class GameControllerTest {
     @Autowired
     GameRepository gameRepository;
     IdGenerator uuidGenerator;
+private SynchronousGame game;
 
     @BeforeEach
     void init() {
@@ -288,6 +289,7 @@ class GameControllerTest {
                 .andExpect(res -> Assertions.assertTrue(res.getResolvedException() instanceof GameException));
     }
 
+
     @Test
     void createHistory() throws Exception {
         var game = initGame();
@@ -323,7 +325,35 @@ class GameControllerTest {
                 .andExpect(jsonPath("$.status").value(GameState.FINISHED.toString()));
     }
 
-    private SynchronousGame initGame() {
+    @Test
+    void changeStatusAfterAddedLastPlayers_leaveGame() throws Exception {
+        game = new PersistentGame("Pol", 4, uuidGenerator);
+        gameRepository.save(game);
+        game.enrollToGame(new PersistentPlayer("Sam", game.getId()));
+        this.mockMvc.perform(
+                MockMvcRequestBuilders.get("/games/" + game.getId() + "/leave-game")
+                        .header("X-Player", "Pol"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
+                .andExpect(jsonPath("$.status").value(GameState.FINISHED.toString()))
+                .andExpect(jsonPath("$.playersInGame").value(0));
+    }
+
+     @Test
+    void wrongGameId_leaveGame() throws Exception {
+        game = new PersistentGame("Pol", 4, uuidGenerator);
+        //gameRepository.save(game);
+        game.enrollToGame(new PersistentPlayer("Sam", game.getId() ));
+        this.mockMvc.perform(
+                MockMvcRequestBuilders.get("/games/" + game.getId() + "/leave-game")
+                        .header("X-Player", "Pol"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameId").value("00000000-0000-0000-0000-000000000001"))
+                .andExpect(jsonPath("$.status").value(GameState.FINISHED.toString()))
+                .andExpect(jsonPath("$.playersInGame").value(0));
+    }
+    
+       private SynchronousGame initGame() {
         var game = new PersistentGame("Pol", 4, uuidGenerator);
         gameRepository.save(game);
         game.enrollToGame(new PersistentPlayer("Sam", uuidGenerator.generateId().toString()));

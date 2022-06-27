@@ -66,23 +66,6 @@ public class PersistentGame implements SynchronousGame {
     }
 
     @Override
-    public SynchronousGame leaveGame(String player) {
-        turnLock.lock();
-        try {
-            if (isPreparingStage()) {
-               gameData.removeAllPlayers();
-                state = GameState.FINISHED;
-                return this;
-            } else {
-               gameData.allPlayers().removeIf(p -> p.getName().equals(player));
-                return this;
-            }
-        } finally {
-            turnLock.unlock();
-        }
-    }
-
-    @Override
     public SynchronousGame enrollToGame(SynchronousPlayer player) {
         turnLock.lock();
         try {
@@ -93,6 +76,7 @@ public class PersistentGame implements SynchronousGame {
                     .ifPresent(m -> {
                         throw new GameException("Player already exist");
                     });
+
             if (gameData.allPlayers().size() < this.maxPlayers) {
                 gameData.addPlayer(player);
                 if (gameData.allPlayers().size() == maxPlayers) {
@@ -223,6 +207,24 @@ public class PersistentGame implements SynchronousGame {
 
     private boolean isTimeOut(long compareTime, long duration) {
         return (System.currentTimeMillis() - compareTime) <= TimeUnit.SECONDS.toMillis(duration);
+    }
+
+    @Override
+    public SynchronousGame leaveGame(String player) {
+        turnLock.lock();
+        List<SynchronousPlayer> players = getPlayersInGame();
+        try {
+            if (isPreparingStage()) {
+                players.clear();
+                state = GameState.FINISHED;
+                return this;
+            } else {
+                players.removeIf(p -> p.getName().equals(player));
+                return this;
+            }
+        } finally {
+            turnLock.unlock();
+        }
     }
 
     private boolean isPreparingStage() {

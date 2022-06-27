@@ -51,7 +51,7 @@ public class GameServiceImpl implements GameService {
 
         var gameDetails = GameDetails.of(synchronousGame);
         return Optional.of(gameDetails);
-    }
+    }    
 
     @Override
     public Optional<GameDetails> createGame(String player, Integer maxPlayer) {
