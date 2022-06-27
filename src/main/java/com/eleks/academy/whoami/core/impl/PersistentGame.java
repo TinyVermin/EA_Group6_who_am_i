@@ -48,10 +48,15 @@ public class PersistentGame implements SynchronousGame {
 
     @Override
     public Optional<SynchronousPlayer> findPlayer(String player) {
-        return gameData.allPlayers()
-                .stream()
-                .filter(existingPlayer -> existingPlayer.getName().equals(player))
-                .findFirst();
+        turnLock.lock();
+        try {
+            return gameData.allPlayers()
+                    .stream()
+                    .filter(existingPlayer -> existingPlayer.getName().equals(player))
+                    .findFirst();
+        } finally {
+            turnLock.unlock();
+        }
     }
 
     @Override
@@ -101,13 +106,7 @@ public class PersistentGame implements SynchronousGame {
 
     @Override
     public List<PlayersWithState> getPlayersInGameWithState() {
-        return gameData.allPlayers()
-                .stream()
-                .map(player -> PlayersWithState.builder()
-                        .player(player)
-                        .state(gameData.getPlayerState(player.getId()))
-                        .build())
-                .toList();
+        return gameData.getPlayersWithState();
     }
 
     @Override
@@ -129,7 +128,7 @@ public class PersistentGame implements SynchronousGame {
                     })
                     .ifPresent(synchronousPlayer -> {
                         gameData.putCharacter(synchronousPlayer.getId(), character);
-                        gameData.updatePlayerState(synchronousPlayer.getId(), PlayerState.READY);
+                        gameData.updatePlayerState(id, PlayerState.READY);
                         if (gameData.availableCharactersSize() == maxPlayers) {
                             state = GameState.READY_TO_START;
                         }
@@ -158,7 +157,7 @@ public class PersistentGame implements SynchronousGame {
         hasCorrectState(player, ASKING)
                 .filter(timer -> isTimeOut(gameData.getInitialTime(), WAITING_QUESTION_TIMEOUT))
                 .or(() -> {
-                    gameData.updatePlayerState(player.getId(), LOSER);
+                    gameData.updatePlayerState(id, LOSER);
                     throw new GameException(TIME_OVER);
                 })
                 .ifPresent(synchronousPlayer -> synchronousPlayer.setAnswer(message, false));
@@ -174,7 +173,7 @@ public class PersistentGame implements SynchronousGame {
                     .or(() -> {
                         var counter = gameData.getInactivityCounter(playerId);
                         if (counter == 3) {
-                            gameData.updatePlayerState(playerId, LOSER);
+                            gameData.updatePlayerState(id, LOSER);
                             return Optional.empty();
                         }
                         gameData.incrementInactivityCounter(playerId);

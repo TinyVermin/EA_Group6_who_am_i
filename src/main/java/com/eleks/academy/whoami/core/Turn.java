@@ -7,6 +7,6 @@ public interface Turn {
 
     List<SynchronousPlayer> getOtherPlayers();
 
-    void changeTurn();
+    SynchronousPlayer changeTurn();
 
 }
