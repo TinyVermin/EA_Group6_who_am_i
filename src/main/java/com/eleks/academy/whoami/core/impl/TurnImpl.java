@@ -26,8 +26,9 @@ public class TurnImpl implements Turn {
     }
 
     @Override
-    public void changeTurn() {
+    public SynchronousPlayer changeTurn() {
         this.currentPlayerIndex = this.currentPlayerIndex + 1 >= this.players.size() ? 0 : this.currentPlayerIndex + 1;
+        return players.get(currentPlayerIndex);
     }
 
 }

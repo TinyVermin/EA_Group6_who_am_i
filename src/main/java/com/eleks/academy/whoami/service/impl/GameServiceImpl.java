@@ -51,15 +51,11 @@ public class GameServiceImpl implements GameService {
 
         var gameDetails = GameDetails.of(synchronousGame);
         return Optional.of(gameDetails);
-    }
-    
-    @Override
-    public Optional<GameDetails> leaveGame(String player, String id) {
-        var game = this.gameRepository.findById(id);
+    }    
 
     @Override
-    public Optional<GameDetails> createGame(String player) {
-        var game = this.gameRepository.save(new PersistentGame(player, 4, uuidGenerator));
+    public Optional<GameDetails> createGame(String player, Integer maxPlayer) {
+        var game = this.gameRepository.save(new PersistentGame(player, maxPlayer, uuidGenerator));
         return Optional.of(GameDetails.of(game));
     }
 
@@ -81,9 +77,8 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Optional<GameDetails> findByIdAndPlayer(String id, String player) {
+    public Optional<GameDetails> findById(String id) {
         return this.findGame(id)
-                .filter(game -> game.findPlayer(player).isPresent())
                 .map(GameDetails::of);
     }
 
@@ -170,5 +165,4 @@ public class GameServiceImpl implements GameService {
                     throw new GameException("Player '" + player + "' is not found");
                 });
     }
-}
 }

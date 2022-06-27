@@ -1,6 +1,13 @@
 package com.eleks.academy.whoami.core.impl;
 
-import com.eleks.academy.whoami.core.*;
+
+import com.eleks.academy.whoami.core.GameData;
+import com.eleks.academy.whoami.core.History;
+import com.eleks.academy.whoami.core.SynchronousPlayer;
+import com.eleks.academy.whoami.core.Game;
+import com.eleks.academy.whoami.core.SynchronousGame;
+import com.eleks.academy.whoami.core.GameState;
+
 import com.eleks.academy.whoami.core.exception.GameException;
 import com.eleks.academy.whoami.model.request.PlayersAnswer;
 import com.eleks.academy.whoami.model.response.PlayerState;
@@ -26,7 +33,7 @@ public class PersistentGame implements SynchronousGame {
     public static final long SUGGESTING_CHARACTER_TIMEOUT = 120;
     public static final long WAITING_QUESTION_TIMEOUT = 60;
     public static final long WAITING_ANSWER_TIMEOUT = 20;
-    public static final String TIME_OVER = "Time is over";
+    private static final String TIME_OVER = "Time is over";
     private static final String NOT_AVAILABLE = "Not available";
 
     private GameState state;
@@ -42,32 +49,20 @@ public class PersistentGame implements SynchronousGame {
 
     @Override
     public Optional<SynchronousPlayer> findPlayer(String player) {
-        return gameData.allPlayers()
-                .stream()
-                .filter(existingPlayer -> existingPlayer.getName().equals(player))
-                .findFirst();
+        turnLock.lock();
+        try {
+            return gameData.allPlayers()
+                    .stream()
+                    .filter(existingPlayer -> existingPlayer.getName().equals(player))
+                    .findFirst();
+        } finally {
+            turnLock.unlock();
+        }
     }
 
     @Override
     public String getId() {
         return this.id;
-    }
-
-    @Override
-    public SynchronousGame leaveGame(String player) {
-        turnLock.lock();
-        try {
-            if (isPreparingStage()) {
-               gameData.removeAllPlayers();
-                state = GameState.FINISHED;
-                return this;
-            } else {
-               gameData.allPlayers().removeIf(p -> p.getName().equals(player));
-                return this;
-            }
-        } finally {
-            turnLock.unlock();
-        }
     }
 
     @Override
@@ -113,13 +108,7 @@ public class PersistentGame implements SynchronousGame {
 
     @Override
     public List<PlayersWithState> getPlayersInGameWithState() {
-        return gameData.allPlayers()
-                .stream()
-                .map(player -> PlayersWithState.builder()
-                        .player(player)
-                        .state(gameData.getPlayerState(player.getId()))
-                        .build())
-                .toList();
+        return gameData.getPlayersWithState();
     }
 
     @Override
@@ -141,7 +130,7 @@ public class PersistentGame implements SynchronousGame {
                     })
                     .ifPresent(synchronousPlayer -> {
                         gameData.putCharacter(synchronousPlayer.getId(), character);
-                        gameData.updatePlayerState(synchronousPlayer.getId(), PlayerState.READY);
+                        gameData.updatePlayerState(id, PlayerState.READY);
                         if (gameData.availableCharactersSize() == maxPlayers) {
                             state = GameState.READY_TO_START;
                         }
@@ -170,13 +159,10 @@ public class PersistentGame implements SynchronousGame {
         hasCorrectState(player, ASKING)
                 .filter(timer -> isTimeOut(gameData.getInitialTime(), WAITING_QUESTION_TIMEOUT))
                 .or(() -> {
-                    gameData.updatePlayerState(player.getId(), LOSER);
+                    gameData.updatePlayerState(id, LOSER);
                     throw new GameException(TIME_OVER);
                 })
-                .ifPresent(synchronousPlayer -> synchronousPlayer.setAnswer(Answer.builder()
-                        .state(ASKING)
-                        .message(message)
-                        .build()));
+                .ifPresent(synchronousPlayer -> synchronousPlayer.setAnswer(message, false));
     }
 
     @Override
@@ -189,22 +175,25 @@ public class PersistentGame implements SynchronousGame {
                     .or(() -> {
                         var counter = gameData.getInactivityCounter(playerId);
                         if (counter == 3) {
-                            gameData.updatePlayerState(playerId, LOSER);
+                            gameData.updatePlayerState(id, LOSER);
                             return Optional.empty();
                         }
                         gameData.incrementInactivityCounter(playerId);
                         return Optional.of(player);
                     })
                     .ifPresent(synchronousPlayer -> {
-                        synchronousPlayer.setAnswer(Answer.builder()
-                                .state(ANSWERING)
-                                .message(answer.toString())
-                                .build());
+                        synchronousPlayer.setAnswer(answer.toString(), false);
                         gameData.clearInactivityCounter(playerId);
                     });
         } finally {
             turnLock.unlock();
         }
+    }
+
+
+    @Override
+    public History getHistory() {
+        return gameData.getHistory();
     }
 
     private Optional<SynchronousPlayer> hasCorrectState(SynchronousPlayer player, PlayerState playerState) {
@@ -218,14 +207,16 @@ public class PersistentGame implements SynchronousGame {
 
     private boolean isTimeOut(long compareTime, long duration) {
         return (System.currentTimeMillis() - compareTime) <= TimeUnit.SECONDS.toMillis(duration);
+    }
 
     @Override
     public SynchronousGame leaveGame(String player) {
         turnLock.lock();
+        List<SynchronousPlayer> players = getPlayersInGame();
         try {
             if (isPreparingStage()) {
                 players.clear();
-                state = GameState.GAME_FINISHED;
+                state = GameState.FINISHED;
                 return this;
             } else {
                 players.removeIf(p -> p.getName().equals(player));
@@ -239,5 +230,4 @@ public class PersistentGame implements SynchronousGame {
     private boolean isPreparingStage() {
         return state == GameState.WAITING_FOR_PLAYER || state == GameState.SUGGESTING_CHARACTER;
     }
-
 }
