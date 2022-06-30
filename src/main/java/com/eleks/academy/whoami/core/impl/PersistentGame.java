@@ -212,14 +212,14 @@ public class PersistentGame implements SynchronousGame {
     @Override
     public SynchronousGame leaveGame(String player) {
         turnLock.lock();
-        List<SynchronousPlayer> players = getPlayersInGame();
         try {
             if (isPreparingStage()) {
-                players.clear();
+                gameData.removeAllPlayers();
                 state = GameState.FINISHED;
                 return this;
             } else {
-                players.removeIf(p -> p.getName().equals(player));
+                getPlayersInGame().removeIf(p -> p.getName().equals(player));
+                gameData.updatePlayerState(player, LOSER);
                 return this;
             }
         } finally {
